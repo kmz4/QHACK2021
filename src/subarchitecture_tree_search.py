@@ -150,6 +150,7 @@ def run_tree_architecture_search(config):
                     # TODO: RUN TRAINING
                     # TODO: CALCULATE NUMBER OF CNOTS
                     # TODO: ADD W-COST AS ATTRIBUTE
+                    print(f'Training leaf {v}')
                     train_circuit(circuit, pshape, X_train, y_train, 'accuracy', **config)
 
             else:
@@ -162,3 +163,5 @@ def run_tree_architecture_search(config):
                     # TODO: RUN TRAINING
                     # TODO: CALCULATE NUMBER OF CNOTS
                     # TODO: ADD W-COST AS ATTRIBUTE
+                    print(f'Training leaf {v}')
+                    train_circuit(circuit, pshape, X_train, y_train, 'accuracy', **config)
