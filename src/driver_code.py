@@ -12,6 +12,8 @@ if __name__=="__main__":
               'prune_step': 3,
               'plot_trees': False,
               'data_set': 'moons',
-              'nsteps': 20
+              'nsteps': 20,
+              'opt': qml.AdamOptimizer,
+              'opt_opts': {'stepsize':0.01}
               }
     run_tree_architecture_search(config)
