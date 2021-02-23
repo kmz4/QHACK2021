@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import sklearn as skl
 import itertools
 import time
-from training import train_circuit
+from training_test import train_circuit
 
 #import autograd.numpy as np
 
@@ -82,6 +82,7 @@ def run_tree_architecture_search(config):
     PRUNE_DEPTH_STEP = config['prune_step']  # EVERY ith step is a prune step
     PRUNE_RATE = config['prune_rate']  # Percentage of nodes to throw away at each layer
     PLOT_INTERMEDIATE_TREES = config['plot_trees']
+    NSTEPS = config['nsteps']
 
     assert MIN_TREE_DEPTH < MAX_TREE_DEPTH, 'MIN_TREE_DEPTH must be smaller than MAX_TREE_DEPTH'
     #TODO: ADD DATA LOADER HERE
