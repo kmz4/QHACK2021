@@ -3,6 +3,7 @@ import numpy as np
 from torch.autograd import Variable
 import torch
 import time
+import tensorflow as tf
 
 
 
@@ -93,7 +94,7 @@ def some_loss_func(y):
 
     return torch.abs(target-y)**2
 
-def Wfunc(arch,nqu,Tmax,interface,loss_func,steps,opt,optimoptions,backend='default.qubit',time_measure='timeit'): 
+def Wfunc(arch,nqu,Tmax,loss_func,steps,opt,optimoptions,interface = None,backend='default.qubit',time_measure='timeit'): 
 #arch must be list, right now interface has to be torch
 #Tmax[0]= maximum param number #Tmax[1] = maximum time with time it #Tmax[2] = maximum number of entangling gates
     depth = len(arch) 
@@ -110,20 +111,43 @@ def Wfunc(arch,nqu,Tmax,interface,loss_func,steps,opt,optimoptions,backend='defa
 
         return loss_func(y)
 
-    params_tr = Variable(torch.tensor(np.ones((nqu, depth))),requires_grad=True)
+    if interface==None:
 
-    opt = opt([params_tr],**optimoptions)
+        params_tr =  np.ones((nqu, depth),requires_grad=True)
+        opt = opt(**optimoptions)
+
+    if interface == 'torch':
+
+        params_tr = Variable(np.ones((nqu, depth)),requires_grad=True)
+        opt = opt([params_tr],**optimoptions)
+
+    if interface == 'tf':
+
+        params_tr = tf.Variable(np.ones((nqu, depth)))
+        opt = opt(**optimoptions)
+
+
+    
 
     start = time.time()
 
     for k in range(steps):
 
-        opt.zero_grad()
+        
         loss = cost_function(params_tr,arch)
         loss.backward()
         print(loss)
 
-        opt.step()
+        if interface=='torch':
+            opt.zero_grad()
+            opt.step()
+
+        if interface=='None':
+            params_tr = opt.step(loss, params_tr)
+
+        
+
+
 
     loss = float(loss) #not sure if this works for all interfaces
     end = time.time()
@@ -147,7 +171,7 @@ def Wfunc(arch,nqu,Tmax,interface,loss_func,steps,opt,optimoptions,backend='defa
 
 
 
-print(Wfunc(archtest,2,[100,100,100],'torch',some_loss_func,1000,torch.optim.Adam,{'lr':0.05}))
+print(Wfunc(archtest,2,[100,100,100],some_loss_func,1000,torch.optim.Adam,{'lr':0.05}))
      
     
 
