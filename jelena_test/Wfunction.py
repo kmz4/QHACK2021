@@ -94,7 +94,7 @@ def some_loss_func(y):
     return torch.abs(target-y)**2
 
 def Wfunc(arch,nqu,Tmax,time_measure='timeit',interface,backend,loss_func,steps,**optimoptions): #arch must be list, #right now interface has to be torch
-
+    #Tmax[0]= maximum param number #Tmax[1] = maximum time with time it #Tmax[2] = maximum number of entangling gates
     depth = len(arch) 
 
     dev = qml.device(backend, wires=nqu)
@@ -130,6 +130,20 @@ def Wfunc(arch,nqu,Tmax,time_measure='timeit',interface,backend,loss_func,steps,
 
     if time_measure=='timeit':
 
+        W = (Tmax[0]-numparam*(Tmax[1]-inftime))/(Tmax[0]*Tmax[1]*loss)
+
+    if time_measure == 'entgates':
+
+        numentgates = num_of_entangling_gate(arch,nqu)
+
+        W = (Tmax[0]-numparam*(Tmax[2]-inftime))/(Tmax[0]*Tmax[2]*loss)
+
+
+    return W
+
+
+
+
 
      
     
@@ -138,14 +152,14 @@ def Wfunc(arch,nqu,Tmax,time_measure='timeit',interface,backend,loss_func,steps,
 
 
 
-start = time.time()
+""" start = time.time()
 
 lossatend = training(optimtest,nqubits,depthtest,stepstest,archtest,0)
 end = time.time()
 inftime = end-start
 print(end-start)
 
-print(num_of_entangling_gate(archtest,nqubits))
+print(num_of_entangling_gate(archtest,nqubits)) """
 
 
         
