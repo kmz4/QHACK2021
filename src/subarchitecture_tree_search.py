@@ -3,9 +3,9 @@ from pennylane import numpy as np
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
-
+from sklearn import datasets
 from circuit_utils import string_to_layer_mapping
-
+from train_utils import train_circuit
 
 def arbitrary_cost_fn():
     return np.random.rand(1)
@@ -34,7 +34,7 @@ def tree_prune(G, leaves_at_depth_d, d, prune_rate):
 def tree_grow_root(G, leaves_at_depth_d, layers):
     for architecture in layers:
         G.add_edge('ROOT', architecture)
-        leaves_at_depth_d[0].append(architecture)
+        leaves_at_depth_d[1].append(architecture)
 
 
 def tree_grow(G, leaves_at_depth_d, d, layers):
@@ -68,6 +68,7 @@ def construct_circuit_from_leaf(leaf, nqubits, nclasses, dev):
 def run_tree_architecture_search(config):
     NQUBITS = config['nqubits']
     NCLASSES = config['nclasses']
+    NSAMPLES = config['n_samples']
     dev = qml.device("default.qubit", wires=NQUBITS)
     MIN_TREE_DEPTH = config['min_tree_depth']
     MAX_TREE_DEPTH = config['max_tree_depth']
@@ -78,8 +79,11 @@ def run_tree_architecture_search(config):
 
     assert MIN_TREE_DEPTH < MAX_TREE_DEPTH, 'MIN_TREE_DEPTH must be smaller than MAX_TREE_DEPTH'
     #TODO: ADD DATA LOADER HERE
-    if config['data_set'] == 'blablabla':
-        pass
+    if config['data_set'] == 'circles':
+        X_train, y_train = datasets.make_circles(n_samples=NSAMPLES, factor=.5, noise=.05)
+    elif config['data_set'] == 'moons':
+        X_train, y_train = datasets.make_moons(n_samples=NSAMPLES, noise=.05)
+    # print(noisy_data)
     G = nx.DiGraph()
 
     G.add_node("ROOT")
@@ -115,6 +119,7 @@ def run_tree_architecture_search(config):
                 tree_grow_root(G, leaves_at_depth_d, possible_layers)
             else:
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
+            print(leaves_at_depth_d)
             for v in leaves_at_depth_d[d]:
                 nx.set_node_attributes(G, {v: arbitrary_cost_fn()[0]}, 'W')
                 if d == 1:
@@ -124,6 +129,8 @@ def run_tree_architecture_search(config):
                     # TODO: RUN TRAINING
                     # TODO: CALCULATE NUMBER OF CNOTS
                     # TODO: ADD W-COST AS ATTRIBUTE
+                    train_circuit(circuit, pshape, X_train, y_train, 'accuracy', **config)
+                    print('here')
         else:
             if not (d - MIN_TREE_DEPTH) % PRUNE_DEPTH_STEP:
                 print('Prune Tree')
