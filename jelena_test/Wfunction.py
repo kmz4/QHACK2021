@@ -1,9 +1,12 @@
 import pennylane as qml
-import numpy as np
+import numpy as np #or import from pennylane?
+#from pennylane import numpy as np
 from torch.autograd import Variable
 import torch
 import time
 import tensorflow as tf
+
+from functools import partial
 
 
 
@@ -59,11 +62,11 @@ def circuit_from_architecture(params,nqubits,architecture):
 
 
 
-def cost_function(circuit,params,nqubits,expvalnum,arch):
+""" def cost_function(circuit,params,nqubits,expvalnum,arch):
 
     target = 0.5
 
-    return torch.abs(target-circuit(params,nqubits,arch)[expvalnum])**2
+    return torch.abs(target-circuit(params,nqubits,arch)[expvalnum])**2 """
 
 
 
@@ -88,11 +91,22 @@ def training(opt,nqubits,depth,steps,arch,expvalnum,cost_function):
         opt.step()
     return loss
 
+def some_loss_func_torch(y):
+
+    target = 1
+    return torch.abs(target-y)**2
+
+def some_loss_func_tf(y):
+
+    target = 0.5
+
+    return tf.abs(target-y)**2
+
 def some_loss_func(y):
 
     target = 0.5
 
-    return torch.abs(target-y)**2
+    return np.abs(target-y)**2
 
 def Wfunc(arch,nqu,Tmax,loss_func,steps,opt,optimoptions,interface = None,backend='default.qubit',time_measure='timeit'): 
 #arch must be list, right now interface has to be torch
@@ -106,19 +120,29 @@ def Wfunc(arch,nqu,Tmax,loss_func,steps,opt,optimoptions,interface = None,backen
     numparam = nqu*depth
 
     def cost_function(params,arch):
+        
+        
+        if type(params).__name__ == 'ArrayBox':
+             
+            params1 = params._value
+        else: 
+            params1 = params
 
-        y = circuit(params,nqubits,arch)[expvalnum]
+        y = circuit(params1,nqubits,arch)[expvalnum]
+
+         
+         
 
         return loss_func(y)
 
     if interface==None:
-
-        params_tr =  np.ones((nqu, depth),requires_grad=True)
+ 
+        params_tr =  np.ones((nqu, depth),requires_grad=True) #does this need requires grad?
         opt = opt(**optimoptions)
 
     if interface == 'torch':
 
-        params_tr = Variable(np.ones((nqu, depth)),requires_grad=True)
+        params_tr = Variable(torch.tensor(np.ones((nqubits, depth))),requires_grad=True)
         opt = opt([params_tr],**optimoptions)
 
     if interface == 'tf':
@@ -130,24 +154,46 @@ def Wfunc(arch,nqu,Tmax,loss_func,steps,opt,optimoptions,interface = None,backen
     
 
     start = time.time()
+   
+ 
+ 
 
-    for k in range(steps):
+    if interface=='torch':
+        for k in range(steps):
 
-        
-        loss = cost_function(params_tr,arch)
-        loss.backward()
-        print(loss)
-
-        if interface=='torch':
             opt.zero_grad()
+            
+            loss = cost_function(params_tr,arch)
+            loss.backward()
+            print(loss)
             opt.step()
-
-        if interface=='None':
-            params_tr = opt.step(loss, params_tr)
-
         
 
+    elif interface==None:
+         
+        for k in range(steps):
 
+            #loss = cost_function(params_tr,arch)
+            loss = cost_function(params_tr,arch)
+            print('loss', loss)
+            params_tr = opt.step(partial(cost_function, arch=arch), params_tr)
+             
+
+
+             
+
+    elif interface=='tf':
+        for k in range(steps):
+
+            with tf.GradientTape() as tape:
+
+                loss = cost_function(params_tr,arch)
+                print(loss)
+
+            gradients = tape.gradient(loss, params) #honestly i just copied this from a tutorial page, 
+            #am not familiar with this tape function
+            opt.apply_gradients(zip(gradients, params_tr))
+            
 
     loss = float(loss) #not sure if this works for all interfaces
     end = time.time()
@@ -171,9 +217,10 @@ def Wfunc(arch,nqu,Tmax,loss_func,steps,opt,optimoptions,interface = None,backen
 
 
 
-print(Wfunc(archtest,2,[100,100,100],some_loss_func,1000,torch.optim.Adam,{'lr':0.05}))
-     
-    
+print(Wfunc(archtest,2,[100,100,100],some_loss_func_torch,100,torch.optim.Adam,{'lr':0.1},interface='torch'))
+
+#print(Wfunc(archtest,2,[100,100,100],some_loss_func,20,qml.optimize.gradient_descent.GradientDescentOptimizer,{'stepsize':0.05}))     
+  
 
 
 
