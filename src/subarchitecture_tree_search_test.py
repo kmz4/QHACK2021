@@ -85,10 +85,11 @@ def run_tree_architecture_search(config):
     NSTEPS = config['nsteps']
     OPTIM = config['opt']
     OPTIMOPT = config['opt_opts']
+    BATCHSIZE = config['batch_size']
 
     assert MIN_TREE_DEPTH < MAX_TREE_DEPTH, 'MIN_TREE_DEPTH must be smaller than MAX_TREE_DEPTH'
     #TODO: ADD DATA LOADER HERE
-    if config['data_set'] == 'blablabla':
+    if config['data_set'] == 'blablabla': #x_train and y_train and x_test and y_test are loaded here
         pass
     G = nx.DiGraph()
 
@@ -133,6 +134,11 @@ def run_tree_architecture_search(config):
                     
                     print(circuit(np.zeros(pshape)))
                     # TODO: RUN TRAINING
+
+                    numparam,inftime,err_rate, W= train_circuit(circuit, pshape[0]*pshape[1],NUMCNOTS,X_train_batch,Y_train_batch,X_test_batch,Y_test_batch,OPTIM,\
+                        OPTIMOPT,'s'=NSTEPS,'batch_size'=BATCHSIZE) #we're feeding in the number of params nad are giving it back, that's weird
+
+                     
                     # TODO: CALCULATE NUMBER OF CNOTS
                     # TODO: ADD W-COST AS ATTRIBUTE
         else:

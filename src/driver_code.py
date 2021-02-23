@@ -14,6 +14,7 @@ if __name__=="__main__":
               'data_set': 'moons',
               'nsteps': 20,
               'opt': qml.AdamOptimizer,
-              'opt_opts': {'stepsize':0.01}
+              'opt_opts': {'stepsize':0.01},
+              'batch_size':100,
               }
     run_tree_architecture_search(config)
