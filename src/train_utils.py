@@ -1,5 +1,5 @@
 import pennylane as qml
-import numpy as np
+from pennylane import numpy as np
 import autograd.numpy as np
 import itertools
 import time
@@ -30,8 +30,6 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     """
 
     # Use this array to make a prediction for the labels of the data in X_test
-    from autograd.numpy import exp, tanh
-
     def hinge_loss(labels, predictions, type='L2'):
         loss = 0
         for l, p in zip(labels, predictions):
@@ -58,12 +56,14 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
         '''
         use MAE to start
         '''
-        labels = {2: -1, 1: 1, 0: 0}
-        n = len(ang_array[0])
-        w = params[-n:]
-        theta = params[:-n]
-        predictions = [2. * (1.0 / (1.0 + exp(np.dot(-w, circuit(theta, angles=x))))) - 1. for x in ang_array]
+        # labels = {2: -1, 1: 1, 0: 0}
+        # n = len(ang_array[0])
+        # w = params[-n:]
+        # theta = params[:-n]
+
+        predictions = [circuit(params, x) for x in ang_array]
         return hinge_loss(actual, predictions)
+
 
     var = np.random.random(parameter_shape) - 2.5
     batch_size = kwargs['batch_size']
@@ -76,6 +76,7 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
         X_train_batch = X_train[batch_index]
         Y_train_batch = Y_train[batch_index]
         var, cost = opt.step_and_cost(lambda v: cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
+        print(cost)
     end = time.time()
     cost_time = (end - start)
 
@@ -87,8 +88,7 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
         X_validation_batch = X_train[validation_batch]
         Y_validation_batch = Y_train[validation_batch]
         start = time.time()  # add in timeit function from Wbranch
-        predictions = [int(np.round(2. * (1.0 / (1.0 + exp(np.dot(-w, circuit(theta, angles=x))))) - 1., 0)) for x in
-                       X_validation_batch]
+        predictions = [circuit(theta, x) for x in X_validation_batch]
         end = time.time()
         inftime = (end - start) / len(X_validation_batch)
         err_rate = 1.0 - accuracy(predictions, Y_validation_batch)
@@ -99,20 +99,20 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     W_ = np.abs((100. - len(var)) / (100.)) * np.abs((100. - inftime) / (100.)) * (1. / err_rate)
     return len(var), inftime, err_rate, W_, var
 
-
-def loop_over_hyperparameters(circuit, n_params, X_train, Y_train, batch_sets, learning_rates, **kwargs):
-    """
-    together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
-    """
-    hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
-    Wmax = 0.0
-    s = kwargs.get('nsteps', None)
-    rate_type = kwargs.get('rate_type', None)
-
-    for idx, sdx in hyperparameters:
-        p, i, er, wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, X_test, Y_test, s=s,
-                                                 batch_size=idx, rate_type=rate_type, learning_rate=sdx)
-        if wtemp >= Wmax:
-            Wmax = wtemp
-            saved_weights = weights
-    return Wmax, saved_weights
+#
+# def loop_over_hyperparameters(circuit, n_params, X_train, Y_train, batch_sets, learning_rates, **kwargs):
+#     """
+#     together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
+#     """
+#     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
+#     Wmax = 0.0
+#     s = kwargs.get('nsteps', None)
+#     rate_type = kwargs.get('rate_type', None)
+#
+#     for idx, sdx in hyperparameters:
+#         p, i, er, wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, X_test, Y_test, s=s,
+#                                                  batch_size=idx, rate_type=rate_type, learning_rate=sdx)
+#         if wtemp >= Wmax:
+#             Wmax = wtemp
+#             saved_weights = weights
+#     return Wmax, saved_weights

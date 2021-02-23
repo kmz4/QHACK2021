@@ -4,8 +4,9 @@ import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
 from sklearn import datasets
-from circuit_utils import string_to_layer_mapping
+from circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
 from train_utils import train_circuit
+
 
 def arbitrary_cost_fn():
     return np.random.rand(1)
@@ -55,13 +56,19 @@ def tree_cost_of_path(G, leaf):
 
 def construct_circuit_from_leaf(leaf, nqubits, nclasses, dev):
     architecture = leaf.split(':')
-    #TODO: GENERALIZE FOR ARBITRARY NUMBER OF CLASSES
-    def circuit_from_architecture(params):
+    # TODO: GENERALIZE FOR ARBITRARY NUMBER OF CLASSES
+
+    embedding_circuit = architecture.pop(0)
+    # print(embedding_circuit)
+
+    def circuit_from_architecture(params, features):
+        string_to_embedding_mapping[embedding_circuit](features, dev.wires)
         for d, component in enumerate(architecture):
             string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
         return qml.expval(qml.PauliZ(0))
 
     params_shape = (nqubits, len(architecture))
+
     return qml.QNode(circuit_from_architecture, dev), params_shape
 
 
@@ -78,18 +85,22 @@ def run_tree_architecture_search(config):
     PLOT_INTERMEDIATE_TREES = config['plot_trees']
 
     assert MIN_TREE_DEPTH < MAX_TREE_DEPTH, 'MIN_TREE_DEPTH must be smaller than MAX_TREE_DEPTH'
-    #TODO: ADD DATA LOADER HERE
+    # TODO: ADD DATA LOADER HERE
     if config['data_set'] == 'circles':
         X_train, y_train = datasets.make_circles(n_samples=NSAMPLES, factor=.5, noise=.05)
     elif config['data_set'] == 'moons':
         X_train, y_train = datasets.make_moons(n_samples=NSAMPLES, noise=.05)
+    X_train = np.multiply(1.0, np.subtract(np.multiply(np.divide(np.subtract(X_train, X_train.min()),
+                                                                 (X_train.max() - X_train.min())), 2.0), 1.0))
+
     # print(noisy_data)
     G = nx.DiGraph()
 
     G.add_node("ROOT")
     nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
-    #TODO: ARE THESE LAYERS ENOUGH?
+    # TODO: ARE THESE LAYERS ENOUGH?
     possible_layers = ['ZZ', 'X', 'Y']
+    possible_embeddings = ['E1', ]
     leaves_at_depth_d = dict(zip(range(MAX_TREE_DEPTH), [[] for _ in range(MAX_TREE_DEPTH)]))
     leaves_at_depth_d[0].append('ROOT')
     # Iteratively construct tree, pruning at set rate
@@ -116,21 +127,16 @@ def run_tree_architecture_search(config):
         # TODO: ADD EMBEDDINGS AT THE ROOT, PARSE THIS PROPERLY IN construct_circuit_from_leaf()
         if d < MIN_TREE_DEPTH:
             if d == 1:
-                tree_grow_root(G, leaves_at_depth_d, possible_layers)
+                tree_grow_root(G, leaves_at_depth_d, possible_embeddings)
             else:
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
-            print(leaves_at_depth_d)
+            # At the embedding level we don't need to train because there are no params.
             for v in leaves_at_depth_d[d]:
-                nx.set_node_attributes(G, {v: arbitrary_cost_fn()[0]}, 'W')
-                if d == 1:
-                    # RUN CIRCUITS HERE
-                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
-                    print(circuit(np.zeros(pshape)))
-                    # TODO: RUN TRAINING
-                    # TODO: CALCULATE NUMBER OF CNOTS
-                    # TODO: ADD W-COST AS ATTRIBUTE
-                    train_circuit(circuit, pshape, X_train, y_train, 'accuracy', **config)
-                    print('here')
+                nx.set_node_attributes(G, {v: 1.0}, 'W')
+                # if d == 1:
+                #     # RUN CIRCUITS HERE
+                #     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                #     print(pshape)
         else:
             if not (d - MIN_TREE_DEPTH) % PRUNE_DEPTH_STEP:
                 print('Prune Tree')
@@ -141,10 +147,10 @@ def run_tree_architecture_search(config):
                     nx.set_node_attributes(G, {v: arbitrary_cost_fn()[0]}, 'W')
                     # RUN CIRCUITS HERE
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
-                    #TODO: RUN TRAINING
-                    #TODO: CALCULATE NUMBER OF CNOTS
-                    #TODO: ADD W-COST AS ATTRIBUTE
-
+                    # TODO: RUN TRAINING
+                    # TODO: CALCULATE NUMBER OF CNOTS
+                    # TODO: ADD W-COST AS ATTRIBUTE
+                    train_circuit(circuit, pshape, X_train, y_train, 'accuracy', **config)
 
             else:
                 print('Grow Tree')

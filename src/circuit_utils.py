@@ -25,6 +25,11 @@ def y_layer(wires, params):
     for n in range(nqubits):
         qml.RY(params[n], wires=[n, ])
 
-#TODO: ADD W-COST HERE
+def embedding_1(X, wires):
+    qml.templates.embeddings.AngleEmbedding(X, wires=wires)
+
+
+# TODO: ADD W-COST HERE
 
 string_to_layer_mapping = {'ZZ': zz_layer, 'X': x_layer, 'Y': y_layer}
+string_to_embedding_mapping = {'E1': embedding_1}
