@@ -8,7 +8,7 @@ import autograd.numpy as np
 import itertools
 import time
 
-def train_circuit(circuit,n_params,X_train,Y_train,X_test,Y_test,optim,optimoptions,inference='wall_clock',rate_type='accuracy',**kwargs):
+def train_circuit(circuit,n_params,n_cnots,X_train,Y_train,X_test,Y_test,optim,optimoptions,inference='wall_clock',rate_type='accuracy',**kwargs):
     """Develop and train your very own variational quantum classifier.
 
     Use the provided training data to train your classifier. The code you write
@@ -98,6 +98,9 @@ def train_circuit(circuit,n_params,X_train,Y_train,X_test,Y_test,optim,optimopti
         err_rate = cost
         inftime = cost_time
     # QHACK #
+    if inference=='cnots':
+        inftime=n_cnots
+        
     W_ = np.abs((100.-len(var))/(100.))*np.abs((100.-inftime)/(100.))*(1./err_rate)
     return len(var),inftime,err_rate,W_
 
