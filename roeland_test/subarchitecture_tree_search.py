@@ -26,8 +26,8 @@ def tree_prune(G, leaves_at_depth_d, d):
 
     leaves_sorted = [x for _, x in sorted(zip(cost_at_leaf,
                                               leaves_at_depth_d[d - 1]))]
-    leaves_kept = leaves_sorted[:int(np.ceil(PRUNE_RATE * len(cost_at_leaf)))]
-    leaves_removed = leaves_sorted[int(np.ceil(PRUNE_RATE * len(cost_at_leaf))):]
+    leaves_kept = leaves_sorted[int(np.ceil(PRUNE_RATE * len(cost_at_leaf))):]
+    leaves_removed = leaves_sorted[:int(np.ceil(PRUNE_RATE * len(cost_at_leaf)))]
     G.remove_nodes_from(leaves_removed)
     leaves_at_depth_d[d - 1] = leaves_kept
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     PRUNE_DEPTH_STEP = 3  # EVERY ith step is a prune step
     PRUNE_RATE = 0.5  # Percentage of nodes to throw away at each layer
     MAX_TREE_DEPTH = 8
-    PLOT_INTERMEDIATE_TREES = True
+    PLOT_INTERMEDIATE_TREES = False
 
     assert MIN_TREE_DEPTH < MAX_TREE_DEPTH, 'MIN_TREE_DEPTH must be smaller than MAX_TREE_DEPTH'
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
             node_color = list(colors.values())
             vmin = min(node_color)
             vmax = max(node_color)
-            nx.draw(G, pos=pos, arrows=True, with_labels=False, cmap='OrRd', node_color=node_color, linewidths=1,
+            nx.draw(G, pos=pos, arrows=True, with_labels=True, cmap='OrRd', node_color=node_color, linewidths=1,
                     vmin=vmin, vmax=vmax, ax=axs)
             axs.collections[0].set_edgecolor("#000000")
 
@@ -129,6 +129,7 @@ if __name__ == "__main__":
                     nx.set_node_attributes(G, {v: arbitrary_cost_fn()[0]}, 'W')
                     # RUN CIRCUITS HERE
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                    # TRAINING
 
 
             else:
