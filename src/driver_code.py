@@ -16,6 +16,7 @@ if __name__=="__main__":
               'opt': qml.AdamOptimizer,
               'opt_opts': {'stepsize':0.01},
               'batch_size':100,
-              'n_samples':1500
+              'n_samples':1500,
+              'TMax':[100,100,100]
               }
     run_tree_architecture_search(config)

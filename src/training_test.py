@@ -8,7 +8,8 @@ import autograd.numpy as np
 import itertools
 import time
 
-def train_circuit(circuit,n_params,n_cnots,X_train,Y_train,X_test,Y_test,optim,optimoptions,inference='wall_clock',rate_type='accuracy',**kwargs):
+def train_circuit(circuit,n_params,n_cnots,X_train,Y_train,optim,optimoptions,MaxPoint,inference='wall_clock',rate_type='accuracy',**kwargs):
+    #MaxPoint[0] is maximum number of parameters, MaxPoint[1] is maximum clock time, MaxPoint[2] max cnot number
     """Develop and train your very own variational quantum classifier.
 
     Use the provided training data to train your classifier. The code you write
@@ -73,7 +74,7 @@ def train_circuit(circuit,n_params,n_cnots,X_train,Y_train,X_test,Y_test,optim,o
     steps = kwargs['s']
     batch_size = kwargs['batch_size']
     num_train = len(Y_train)
-    validation_size = int(num_train//2)
+    validation_size = 3*kwargs['batch_size']
     opt = optim(**optimoptions)
     start = time.time()
     for _ in range(steps):
@@ -88,120 +89,49 @@ def train_circuit(circuit,n_params,n_cnots,X_train,Y_train,X_test,Y_test,optim,o
     theta = var[:-X_train.shape[1]]
 
     if rate_type =='accuracy':
+        validation_batch = np.random.randint(0, num_train, (validation_size,))
+        X_validation_batch = X_train[validation_batch]
+        Y_validation_batch = Y_train[validation_batch]
         start = time.time() # add in timeit function from Wbranch
-        predictions=[int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, angles=x)))))- 1.,0)) for x in X_test]
+        predictions=[int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, angles=x)))))- 1.,0)) for x in X_validation_batch]
         end = time.time()
+
         if inference=='wall_clock':
-            inftime = (end-start)/len(X_test)
-        err_rate = 1.0 - accuracy(predictions,Y_test)
+            inftime = (end-start)/len(X_validation_batch)
+            err_rate = 1.0 - accuracy(predictions,Y_validation_batch)
     elif rate_type=='batch_cost':
         err_rate = cost
-        inftime = cost_time
+
+        if inference=='wall_clock': #adding this kind of unnecessary if so that we can add other options later
+            inftime = cost_time
+        
     # QHACK #
     if inference=='cnots':
         inftime=n_cnots
+
+    if inference =='wall_clock':
         
-    W_ = np.abs((100.-len(var))/(100.))*np.abs((100.-inftime)/(100.))*(1./err_rate)
+        W_ = np.abs((MaxPoint[0]-len(var))/(MaxPoint[0]))*np.abs((MaxPoint[1]-inftime)/(MaxPoint[1]))*(1./err_rate)
+
+    elif inference=='cnots':
+        W_ = np.abs((MaxPoint[0]-len(var))/(MaxPoint[0]))*np.abs((MaxPoint[2]-inftime)/(MaxPoint[2]))*(1./err_rate)
+
     return len(var),inftime,err_rate,W_
 
 
-def classify_data(X_train,Y_train,X_test,Y_test,**kwargs):
-    """Develop and train your very own variational quantum classifier.
-
-    Use the provided training data to train your classifier. The code you write
-    for this challenge should be completely contained within this function
-    between the # QHACK # comment markers. The number of qubits, choice of
-    variational ansatz, cost function, and optimization method are all to be
-    developed by you in this function.
-
-    Args:
-        X_train (np.ndarray): An array of floats of size (250, 3) to be used as training data.
-        Y_train (np.ndarray): An array of size (250,) which are the categorical labels
-            associated to the training data. The categories are labeled by -1, 0, and 1.
-        X_test (np.ndarray): An array of floats of (50, 3) to serve as testing data.
-
-    Returns:
-        str: The predicted categories of X_test, converted from a list of ints to a
-            comma-separated string.
+ def loop_over_hyperparameters(circuit,n_params,X_train,Y_train,batch_sets,learning_rates,**kwargs):
     """
+    together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
+    """
+    hyperparameter_space = list(itertools.product(batch_sets,learning_rates))
+    Wmax = 0.0
+    s = kwargs.get('s', None)
+    rate_type = kwargs.get('rate_type',None)
 
-    # Use this array to make a prediction for the labels of the data in X_test
-    predictions = []
+    for idx,sdx in hyperparameters:
+        p,i,er,wtemp,weights=train_circuit(circuit,n_params,X_train,Y_train,X_test,Y_test,s=s,batch_size=idx,rate_type=rate_type,learning_rate=sdx)
+        if wtemp>=Wmax:
+            Wmax=wtemp
+            saved_weights = weights
+    return Wmax,saved_weights
 
-    # QHACK #
-
-    from autograd.numpy import exp,tanh
-
-    def statepreparation(a):
-        qml.templates.embeddings.AngleEmbedding(a, wires=range(3), rotation='Y')
-
-    def layer(W):
-        qml.templates.layers.BasicEntanglerLayers(W, wires=range(3), rotation=qml.ops.RY)
-
-    def hinge_loss(labels, predictions,type='L2'):
-        loss = 0
-        for l, p in zip(labels, predictions):
-            if type=='L1':
-                loss = loss + np.abs(l - p) # L1 loss
-            elif type=='L2':
-                loss = loss + (l - p) ** 2 # L2 loss
-        loss = loss/len(labels)
-        return loss
-
-    def accuracy(labels, predictions):
-
-        loss = 0
-        tol = 0.05
-        #tol = 0.1
-        for l, p in zip(labels, predictions):
-            if abs(l - p) < tol:
-                loss = loss + 1
-        loss = loss / len(labels)
-
-        return loss
-
-    def cost_fcn(params,circuit=None,ang_array=[], actual=[]):
-        '''
-        use MAE to start
-        '''
-        w = params[-3:]
-        theta = params[:-3]
-        predictions = [2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, angles=x)))))- 1. for x in ang_array]
-        return hinge_loss(actual, predictions)
-
-    dev = qml.device("default.qubit", wires=3)
-    @qml.qnode(dev)
-    def inside_circuit(params,angles=None):
-        statepreparation(angles)
-        W= np.reshape(params,(len(params)//3,3))
-        layer(W)
-        return qml.expval(qml.PauliZ(0)),qml.expval(qml.PauliZ(1)),qml.expval(qml.PauliZ(2))
-
-
-    var = np.hstack((np.zeros(6),5*np.random.random(3)-2.5))
-    steps = kwargs['s']
-    batch_size = kwargs['batch_size']
-    num_train = len(Y_train)
-    validation_size = int(num_train//2)
-    opt = qml.AdamOptimizer(kwargs['learning_rate'])
-
-    for _ in range(steps):
-        batch_index = np.random.randint(0, num_train, (batch_size,))
-        X_train_batch = X_train[batch_index]
-        Y_train_batch = Y_train[batch_index]
-
-        var,cost = opt.step_and_cost(lambda v: cost_fcn(v, inside_circuit,X_train_batch, Y_train_batch), var)
-
-    # need timing values from computing predictions
-
-
-    theta = var[:-3]
-    w = var[-3:]
-    start = time.time() # add in timeit function from Wbranch
-    predictions=[int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,inside_circuit(theta, angles=x)))))- 1.,0)) for x in X_test]
-    end = time.time()
-    inftime = end-start
-    err_rate = 1.0 - accuracy(predictions,Y_test)
-    # QHACK #
-    W_ = len(var)*inftime*(1./err_rate)
-    return len(var),inftime,err_rate,W_

@@ -88,6 +88,7 @@ def run_tree_architecture_search(config):
     OPTIMOPT = config['opt_opts']
     BATCHSIZE = config['batch_size']
     NSAMPLES = config['n_samples']
+    TMAX = config['TMax']
 
     assert MIN_TREE_DEPTH < MAX_TREE_DEPTH, 'MIN_TREE_DEPTH must be smaller than MAX_TREE_DEPTH'
     #TODO: ADD DATA LOADER HERE
@@ -152,8 +153,8 @@ def run_tree_architecture_search(config):
                     print(circuit(np.zeros(pshape)))
                     # TODO: RUN TRAINING
 
-                    numparam,inftime,err_rate, W= train_circuit(circuit, pshape[0]*pshape[1],numcnots,X_train,Y_train,X_test,Y_test,OPTIM,\
-                        OPTIMOPT,'s'=NSTEPS,'batch_size'=BATCHSIZE) #we're feeding in the number of params nad are giving it back, that's weird
+                    numparam,inftime,err_rate, W= train_circuit(circuit, pshape[0]*pshape[1],numcnots,X_train,Y_train,OPTIM,\
+                        OPTIMOPT,TMAX,'s'=NSTEPS,'batch_size'=BATCHSIZE) #we're feeding in the number of params nad are giving it back, that's weird
 
                      
                     # TODO: CALCULATE NUMBER OF CNOTS
