@@ -60,7 +60,6 @@ def construct_circuit_from_leaf(leaf, nqubits, nclasses, dev):
 
     embedding_circuit = architecture.pop(0)
     # print(embedding_circuit)
-
     def circuit_from_architecture(params, features):
         string_to_embedding_mapping[embedding_circuit](features, dev.wires)
         for d, component in enumerate(architecture):

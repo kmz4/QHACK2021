@@ -80,15 +80,13 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     end = time.time()
     cost_time = (end - start)
 
-    w = var[-X_train.shape[1]:]
-    theta = var[:-X_train.shape[1]]
 
     if rate_type == 'accuracy':
         validation_batch = np.random.randint(0, num_train, (validation_size,))
         X_validation_batch = X_train[validation_batch]
         Y_validation_batch = Y_train[validation_batch]
         start = time.time()  # add in timeit function from Wbranch
-        predictions = [circuit(theta, x) for x in X_validation_batch]
+        predictions = [circuit(var, x) for x in X_validation_batch]
         end = time.time()
         inftime = (end - start) / len(X_validation_batch)
         err_rate = 1.0 - accuracy(predictions, Y_validation_batch)
