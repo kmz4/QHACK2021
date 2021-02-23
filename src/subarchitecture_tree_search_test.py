@@ -83,6 +83,8 @@ def run_tree_architecture_search(config):
     PRUNE_RATE = config['prune_rate']  # Percentage of nodes to throw away at each layer
     PLOT_INTERMEDIATE_TREES = config['plot_trees']
     NSTEPS = config['nsteps']
+    OPTIM = config['opt']
+    OPTIMOPT = config['opt_opts']
 
     assert MIN_TREE_DEPTH < MAX_TREE_DEPTH, 'MIN_TREE_DEPTH must be smaller than MAX_TREE_DEPTH'
     #TODO: ADD DATA LOADER HERE
