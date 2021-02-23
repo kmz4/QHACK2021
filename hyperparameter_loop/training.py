@@ -8,7 +8,7 @@ import autograd.numpy as np
 import itertools
 import time
 
-def train_circuit(circuit,n_params,X_train,Y_train,X_test,Y_test,**kwargs):
+def train_circuit(circuit,n_params,X_train,Y_train,X_test,Y_test,inference='wall_clock',rate_type='accuracy',**kwargs):
     """Develop and train your very own variational quantum classifier.
 
     Use the provided training data to train your classifier. The code you write
@@ -26,7 +26,7 @@ def train_circuit(circuit,n_params,X_train,Y_train,X_test,Y_test,**kwargs):
         kwargs: hyperparameters for the training (steps, batch_size, learning_rate)
 
     Returns:
-        (p,i,e): The number of parameters, the inference time (time to evaluate the accuracy), error rate (accuracy on the test set)
+        (p,i,e,w): The number of parameters, the inference time (time to evaluate the accuracy), error rate (accuracy on the test set)
     """
 
     # Use this array to make a prediction for the labels of the data in X_test
@@ -75,22 +75,30 @@ def train_circuit(circuit,n_params,X_train,Y_train,X_test,Y_test,**kwargs):
     num_train = len(Y_train)
     validation_size = int(num_train//2)
     opt = qml.AdamOptimizer(kwargs['learning_rate'])
-
+    start = time.time()
     for _ in range(steps):
         batch_index = np.random.randint(0, num_train, (batch_size,))
         X_train_batch = X_train[batch_index]
         Y_train_batch = Y_train[batch_index]
-
         var,cost = opt.step_and_cost(lambda v: cost_fcn(v, circuit,X_train_batch, Y_train_batch), var)
+    end = time.time()
+    cost_time = (end-start)
+
     w = var[-X_train.shape[1]:]
     theta = var[:-X_train.shape[1]]
-    start = time.time() # add in timeit function from Wbranch
-    predictions=[int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, angles=x)))))- 1.,0)) for x in X_test]
-    end = time.time()
-    inftime = end-start
-    err_rate = accuracy(predictions,Y_test)
+
+    if rate_type =='accuracy':
+        start = time.time() # add in timeit function from Wbranch
+        predictions=[int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, angles=x)))))- 1.,0)) for x in X_test]
+        end = time.time()
+        if inference=='wall_clock':
+            inftime = (end-start)/len(X_test)
+        err_rate = 1.0 - accuracy(predictions,Y_test)
+    elif rate_type=='batch_cost':
+        err_rate = cost
+        inftime = cost_time
     # QHACK #
-    W_ = len(var)*inftime*(1./err_rate)
+    W_ = np.abs((100.-len(var))/(100.))*np.abs((100.-inftime)/(100.))*(1./err_rate)
     return len(var),inftime,err_rate,W_
 
 
@@ -153,7 +161,6 @@ def classify_data(X_train,Y_train,X_test,Y_test,**kwargs):
         '''
         use MAE to start
         '''
-        labels = {2:-1,1:1,0:0}
         w = params[-3:]
         theta = params[:-3]
         predictions = [2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, angles=x)))))- 1. for x in ang_array]
@@ -191,7 +198,7 @@ def classify_data(X_train,Y_train,X_test,Y_test,**kwargs):
     predictions=[int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,inside_circuit(theta, angles=x)))))- 1.,0)) for x in X_test]
     end = time.time()
     inftime = end-start
-    err_rate = accuracy(predictions,Y_test)
+    err_rate = 1.0 - accuracy(predictions,Y_test)
     # QHACK #
     W_ = len(var)*inftime*(1./err_rate)
     return len(var),inftime,err_rate,W_
