@@ -24,3 +24,6 @@ def y_layer(wires, params):
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RY(params[n], wires=[n, ])
+
+
+string_to_layer_mapping = {'ZZ': zz_layer, 'X': x_layer, 'Y': y_layer}

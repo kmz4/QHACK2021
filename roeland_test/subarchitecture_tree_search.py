@@ -1,8 +1,11 @@
-import numpy as np
+import pennylane as qml
+from pennylane import numpy as np
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 import itertools as it
 import matplotlib.pyplot as plt
+
+from circuit_utils import string_to_layer_mapping
 
 
 def arbitrary_cost_fn():
@@ -51,12 +54,22 @@ def tree_cost_of_path(G, leaf):
     return sum([G.nodes[node]['W'] for node in paths])
 
 
-def construct_circuit_from_leaf(leaf):
-    print(leaf)
+def construct_circuit_from_leaf(leaf, nqubits, nclasses, dev):
+    architecture = leaf.split(':')
+
+    def circuit_from_architecture(params):
+        for d, component in enumerate(architecture):
+            string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
+        return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.PauliZ(2))
+
+    params_shape = (NQUBITS, len(architecture))
+    return qml.QNode(circuit_from_architecture, dev), params_shape
 
 
 if __name__ == "__main__":
-
+    NQUBITS = 4
+    NCLASSES = 3
+    dev = qml.device("default.qubit", wires=NQUBITS)
     MIN_TREE_DEPTH = 3
     PRUNE_DEPTH_STEP = 3  # EVERY ith step is a prune step
     PRUNE_RATE = 0.5  # Percentage of nodes to throw away at each layer
@@ -70,9 +83,7 @@ if __name__ == "__main__":
     G.add_node("ROOT")
     nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
 
-    num_2_string_dict = {0: 'ZZ', 1: 'X', 2: 'Y'}
     possible_layers = ['ZZ', 'X', 'Y']
-    n_architecures = 0
     leaves_at_depth_d = dict(zip(range(MAX_TREE_DEPTH), [[] for _ in range(MAX_TREE_DEPTH)]))
     leaves_at_depth_d[0].append('ROOT')
     # Iteratively construct tree, pruning at set rate
@@ -104,8 +115,10 @@ if __name__ == "__main__":
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
             for v in leaves_at_depth_d[d]:
                 nx.set_node_attributes(G, {v: arbitrary_cost_fn()[0]}, 'W')
-                # RUN CIRCUITS HERE
-                circuit = construct_circuit_from_leaf(v)
+                if d == 1:
+                    # RUN CIRCUITS HERE
+                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                    print(circuit(np.zeros(pshape)))
         else:
             if not (d - MIN_TREE_DEPTH) % PRUNE_DEPTH_STEP:
                 print('Prune Tree')
@@ -115,9 +128,13 @@ if __name__ == "__main__":
                 for v in leaves_at_depth_d[d]:
                     nx.set_node_attributes(G, {v: arbitrary_cost_fn()[0]}, 'W')
                     # RUN CIRCUITS HERE
+                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+
+
             else:
                 print('Grow Tree')
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
                 for v in leaves_at_depth_d[d]:
                     nx.set_node_attributes(G, {v: arbitrary_cost_fn()[0]}, 'W')
                     # RUN CIRCUITS HERE
+                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
