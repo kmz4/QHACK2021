@@ -49,7 +49,7 @@ def y_layer(wires, params):
 #num_2_string_dict = {0: 'ZZ', 1: 'X', 2: 'Y'}
 layer_language = {'ZZ': zz_layer, 'X': x_layer, 'Y': y_layer}
 
-def num_of_entangling_gate(architecture,nwires): #takes in architecture 'object' as Roeland has defined it #architecture has to be a list
+def num_of_entangling_gate(architecture,nwires):  #architecture has to be a list,not iterobject
 
     return architecture.count('ZZ')*2*nwires
 
@@ -61,17 +61,8 @@ def circuit_from_architecture(params,nqubits,architecture):
     return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(0))
 
 
-
-""" def cost_function(circuit,params,nqubits,expvalnum,arch):
-
-    target = 0.5
-
-    return torch.abs(target-circuit(params,nqubits,arch)[expvalnum])**2 """
-
-
-
-
-def training(opt,nqubits,depth,steps,arch,expvalnum,cost_function):
+ 
+""" def training(opt,nqubits,depth,steps,arch,expvalnum,cost_function):
     params_tr = Variable(torch.tensor(np.ones((nqubits, depth))),requires_grad=True)
 
     print(opt)
@@ -89,7 +80,7 @@ def training(opt,nqubits,depth,steps,arch,expvalnum,cost_function):
          
          
         opt.step()
-    return loss
+    return loss """
 
 def some_loss_func_torch(y):
 
@@ -175,7 +166,7 @@ def Wfunc(arch,nqu,Tmax,loss_func,steps,opt,optimoptions,interface = None,backen
 
             #loss = cost_function(params_tr,arch)
             loss = cost_function(params_tr,arch)
-            print('loss', loss)
+            #print('loss', loss)
             params_tr = opt.step(partial(cost_function, arch=arch), params_tr)
              
 
@@ -183,16 +174,24 @@ def Wfunc(arch,nqu,Tmax,loss_func,steps,opt,optimoptions,interface = None,backen
              
 
     elif interface=='tf':
-        for k in range(steps):
 
-            with tf.GradientTape() as tape:
+        
 
-                loss = cost_function(params_tr,arch)
-                print(loss)
+        opt.minimize(partial(cost_function, arch=arch), var_list=[params])
 
-            gradients = tape.gradient(loss, params) #honestly i just copied this from a tutorial page, 
+
+        #for k in range(steps):
+
+            #with tf.GradientTape() as tape:
+
+                
+                 
+
+            #gradients = tape.gradient(loss, params_tr) #honestly i just copied this from a tutorial page, 
             #am not familiar with this tape function
-            opt.apply_gradients(zip(gradients, params_tr))
+             
+            #print(type(params_tr))
+            #opt.apply_gradients(zip(gradients, params_tr))
             
 
     loss = float(loss) #not sure if this works for all interfaces
@@ -217,7 +216,8 @@ def Wfunc(arch,nqu,Tmax,loss_func,steps,opt,optimoptions,interface = None,backen
 
 
 
-print(Wfunc(archtest,2,[100,100,100],some_loss_func_torch,100,torch.optim.Adam,{'lr':0.1},interface='torch'))
+#print(Wfunc(archtest,2,[100,100,100],some_loss_func_torch,100,torch.optim.Adam,{'lr':0.1},interface='torch'))
+print(Wfunc(archtest,2,[100,100,100],some_loss_func_tf,100,tf.keras.optimizers.Adam,{'learning_rate':0.1},interface='tf'))
 
 #print(Wfunc(archtest,2,[100,100,100],some_loss_func,20,qml.optimize.gradient_descent.GradientDescentOptimizer,{'stepsize':0.05}))     
   
