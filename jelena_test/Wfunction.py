@@ -4,12 +4,18 @@ from torch.autograd import Variable
 import torch
 import time
 
-num_2_string_dict = {0: 'ZZ', 1: 'X', 2: 'Y'}
-layer_language = {'ZZ': zz_layer, 'X': x_layer, 'Y': y_layer}
+
 
 num_of_CNOTS_per_wire = [2,0,0]
+nqubits = 2
+expvalnum = 0
 
-dev = qml.device("default.qubit", wires=nqubits)
+
+archtest = ['ZZ','X']
+depthtest= len(archtest)
+expvalnumtest=0
+optimtest = torch.optim.Adam
+stepstest = 20
 
 
 def zz_layer(wires, params):
@@ -36,47 +42,110 @@ def y_layer(wires, params):
     for n in range(nqubits):
         qml.RY(params[n], wires=[n, ])
 
+num_2_string_dict = {0: 'ZZ', 1: 'X', 2: 'Y'}
+layer_language = {'ZZ': zz_layer, 'X': x_layer, 'Y': y_layer}
+
 def num_of_entangling_gate(architecture,nwires): #takes in architecture 'object' as Roeland has defined it #architecture has to be a list
 
-    return architecture.count(0)*2*nwires
+    return architecture.count('ZZ')*2*nwires
 
-def circuit_from_architecture(params,nqubits):
+def circuit_from_architecture(params,nqubits,architecture):
     it = 0
     for component in architecture:
             layer_language[component](list(range(nqubits)), params[:, it])
             it+=1
-    return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1)), qml.expval(qml.PauliZ(2))
+    return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(0))
 
-circuit = qml.QNode(circuit_from_architecture, dev,interface=torch)
 
-def cost_function(params,nqubits,expvalnum):
+
+def cost_function(circuit,params,nqubits,expvalnum,arch):
 
     target = 0.5
 
-    return torch.abs(target-circuit(params,nqubits)[expvalnum])**2
+    return torch.abs(target-circuit(params,nqubits,arch)[expvalnum])**2
 
 
-optim = torch.optim.Adam
 
-def training(cost,opt,nqubits,depth,steps,opt):
+
+def training(opt,nqubits,depth,steps,arch,expvalnum,cost_function):
     params_tr = Variable(torch.tensor(np.ones((nqubits, depth))),requires_grad=True)
 
-    opt([params_tr],lr=0.01)
+    print(opt)
+
+    opt = opt([params_tr],lr=0.01)
+
+
 
     for k in range(steps):
 
         opt.zero_grad()
-        loss = cost_function(params_tr,nqubits,expvalnum)
+        loss = cost_function(params_tr,nqubits,expvalnum,arch)
         loss.backward()
+
+         
          
         opt.step()
     return loss
 
+def some_loss_func(y):
+
+    target = 0.5
+
+    return torch.abs(target-y)**2
+
+def Wfunc(arch,nqu,Tmax,time_measure='timeit',interface,backend,loss_func,steps,**optimoptions): #arch must be list, #right now interface has to be torch
+
+    depth = len(arch) 
+
+    dev = qml.device(backend, wires=nqu)
+
+    circuit = qml.QNode(circuit_from_architecture, dev,interface = interface)
+
+    numparam = nqu*depth
+
+    def cost_function(params,arch):
+
+        y = circuit(params,nqubits,arch)[expvalnum]
+
+        return loss_func(y)
+
+    params_tr = Variable(torch.tensor(np.ones((nqu, depth))),requires_grad=True)
+
+    opt = opt([params_tr],**optimoptions)
+
+    start = time.time()
+
+    for k in range(steps):
+
+        opt.zero_grad()
+        loss = cost_function(params_tr,arch)
+        loss.backward()
+
+         
+         
+        opt.step()
+
+    end = time.time()
+    inftime = end-start
+
+    if time_measure=='timeit':
+
+
+     
+    
+
+
+
+
+
 start = time.time()
 
-print(hello)
+lossatend = training(optimtest,nqubits,depthtest,stepstest,archtest,0)
 end = time.time()
-print(start-end)
+inftime = end-start
+print(end-start)
+
+print(num_of_entangling_gate(archtest,nqubits))
 
 
         
