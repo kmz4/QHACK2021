@@ -4,6 +4,7 @@ import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
 import sklearn as skl
+from sklearn import datasets
 import itertools
 import time
 from training_test import train_circuit
@@ -86,11 +87,27 @@ def run_tree_architecture_search(config):
     OPTIM = config['opt']
     OPTIMOPT = config['opt_opts']
     BATCHSIZE = config['batch_size']
+    NSAMPLES = config['n_samples']
 
     assert MIN_TREE_DEPTH < MAX_TREE_DEPTH, 'MIN_TREE_DEPTH must be smaller than MAX_TREE_DEPTH'
     #TODO: ADD DATA LOADER HERE
     if config['data_set'] == 'blablabla': #x_train and y_train and x_test and y_test are loaded here
         pass
+
+    elif config['data_set'] == 'circles': 
+
+        noisy_data = datasets.make_circles(n_samples=NSAMPLES, factor=.5, noise=.05)
+
+    elif config['data_set'] == 'moons':
+
+        noisy_data = datasets.make_moons(n_samples=NSAMPLES, factor=.5, noise=.05)
+
+    
+    X_train = noisy_circles[0][:1000] #leaving this hard coded right now
+    Y_train = noisy_circles[1][:1000]
+    X_test = noisy_circles[0][500:]
+    Y_test = noisy_circles[1][500:]
+
     G = nx.DiGraph()
 
     G.add_node("ROOT")
@@ -130,12 +147,12 @@ def run_tree_architecture_search(config):
                 nx.set_node_attributes(G, {v: arbitrary_cost_fn()[0]}, 'W')
                 if d == 1:
                     # RUN CIRCUITS HERE
-                    circuit, pshape, NUMCNOTS = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                    circuit, pshape, numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     
                     print(circuit(np.zeros(pshape)))
                     # TODO: RUN TRAINING
 
-                    numparam,inftime,err_rate, W= train_circuit(circuit, pshape[0]*pshape[1],NUMCNOTS,X_train_batch,Y_train_batch,X_test_batch,Y_test_batch,OPTIM,\
+                    numparam,inftime,err_rate, W= train_circuit(circuit, pshape[0]*pshape[1],numcnots,X_train,Y_train,X_test,Y_test,OPTIM,\
                         OPTIMOPT,'s'=NSTEPS,'batch_size'=BATCHSIZE) #we're feeding in the number of params nad are giving it back, that's weird
 
                      
