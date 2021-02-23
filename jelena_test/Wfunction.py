@@ -42,7 +42,7 @@ def y_layer(wires, params):
     for n in range(nqubits):
         qml.RY(params[n], wires=[n, ])
 
-num_2_string_dict = {0: 'ZZ', 1: 'X', 2: 'Y'}
+#num_2_string_dict = {0: 'ZZ', 1: 'X', 2: 'Y'}
 layer_language = {'ZZ': zz_layer, 'X': x_layer, 'Y': y_layer}
 
 def num_of_entangling_gate(architecture,nwires): #takes in architecture 'object' as Roeland has defined it #architecture has to be a list
@@ -93,8 +93,9 @@ def some_loss_func(y):
 
     return torch.abs(target-y)**2
 
-def Wfunc(arch,nqu,Tmax,time_measure='timeit',interface,backend,loss_func,steps,**optimoptions): #arch must be list, #right now interface has to be torch
-    #Tmax[0]= maximum param number #Tmax[1] = maximum time with time it #Tmax[2] = maximum number of entangling gates
+def Wfunc(arch,nqu,Tmax,interface,loss_func,steps,opt,optimoptions,backend='default.qubit',time_measure='timeit'): 
+#arch must be list, right now interface has to be torch
+#Tmax[0]= maximum param number #Tmax[1] = maximum time with time it #Tmax[2] = maximum number of entangling gates
     depth = len(arch) 
 
     dev = qml.device(backend, wires=nqu)
@@ -120,15 +121,17 @@ def Wfunc(arch,nqu,Tmax,time_measure='timeit',interface,backend,loss_func,steps,
         opt.zero_grad()
         loss = cost_function(params_tr,arch)
         loss.backward()
+        print(loss)
 
-         
-         
         opt.step()
 
+    loss = float(loss) #not sure if this works for all interfaces
     end = time.time()
     inftime = end-start
 
     if time_measure=='timeit':
+
+        print('timeit')
 
         W = (Tmax[0]-numparam*(Tmax[1]-inftime))/(Tmax[0]*Tmax[1]*loss)
 
@@ -144,7 +147,7 @@ def Wfunc(arch,nqu,Tmax,time_measure='timeit',interface,backend,loss_func,steps,
 
 
 
-
+print(Wfunc(archtest,2,[100,100,100],'torch',some_loss_func,1000,torch.optim.Adam,{'lr':0.05}))
      
     
 
