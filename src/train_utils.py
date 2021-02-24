@@ -98,9 +98,10 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     return W_
 
 #
-def loop_over_hyperparameters(circuit, n_params, X_train, Y_train, batch_sets, learning_rates, **kwargs):
+def evaluate_w(circuit, n_params, X_train, Y_train, batch_sets=[], learning_rates=[], **kwargs):
     """
     together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
+    batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists
     """
     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
     Wmax = 0.0
