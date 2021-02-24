@@ -1,9 +1,13 @@
 import pennylane as qml
 from pennylane import numpy as np
+import pickle
+
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
+
 from sklearn import datasets
+
 from circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
 from train_utils import train_circuit
 
@@ -75,9 +79,10 @@ def run_tree_architecture_search(config):
     NQUBITS = config['nqubits']
     NCLASSES = config['nclasses']
     NSAMPLES = config['n_samples']
-    dev = qml.device("default.qubit", wires=NQUBITS)
+    dev = qml.device("default.qubit.autograd", wires=NQUBITS)
     MIN_TREE_DEPTH = config['min_tree_depth']
     MAX_TREE_DEPTH = config['max_tree_depth']
+    SAVE_FREQUENCY = config['save_frequency']
 
     PRUNE_DEPTH_STEP = config['prune_step']  # EVERY ith step is a prune step
     PRUNE_RATE = config['prune_rate']  # Percentage of nodes to throw away at each layer
@@ -110,6 +115,8 @@ def run_tree_architecture_search(config):
     # Iteratively construct tree, pruning at set rate
     for d in range(1, MAX_TREE_DEPTH):
         print(f"Depth = {d}")
+        if (SAVE_FREQUENCY>0) & ~(d%SAVE_FREQUENCY):
+            nx.write_gpickle(G, config['save_path']+ f'/tree_depth_{d}.pickle')
         if PLOT_INTERMEDIATE_TREES:
             fig, axs = plt.subplots(1, 1)
             fig.set_size_inches(16, 8)
