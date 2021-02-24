@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 # placeholder for now
 setup(
-    name='',
+    name='qose',
     version='0.1',
-    packages=[''],
+    packages=['qose'],
     url='',
     license='',
     author='Aroosa Ijaz, Kathleen Hamilton, Jelena Mackeprang,Roeland Wiersema',
@@ -11,6 +11,5 @@ setup(
     description='',
     install_requires=['numpy', 'pennylane', 'torch', 'autograd'],
     python_requires='>=3.6',
-    package_dir = {'': ''},
+    package_dir = {'qose': 'qose'},
 )
-
