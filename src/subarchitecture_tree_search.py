@@ -199,7 +199,8 @@ def run_tree_architecture_search(config: dict):
                 for v in leaves_at_depth_d[d]:
                     print(f'Training leaf {v}')
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
-                    w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    w_cost = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
                     # Add the w_cost to the node so we can use it later for pruning
                     nx.set_node_attributes(G, {v: w_cost}, 'W')
 
@@ -214,7 +215,8 @@ def run_tree_architecture_search(config: dict):
                 for v in leaves_at_depth_d[d]:
                     print(f'Training leaf {v}')
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
-                    w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    w_cost = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
                     # Add the w_cost to the node so we can use it later for pruning
                     nx.set_node_attributes(G, {v: w_cost}, 'W')
 
@@ -224,5 +226,6 @@ def run_tree_architecture_search(config: dict):
                 for v in leaves_at_depth_d[d]:
                     print(f'Training leaf {v}')
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
-                    w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    w_cost = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
                     nx.set_node_attributes(G, {v: w_cost}, 'W')
