@@ -8,7 +8,7 @@ setup(
     license='',
     author='Aroosa Ijaz, Kathleen Hamilton, Jelena Mackeprang,Roeland Wiersema',
     author_email='',
-    description='',
+    description='a PennyLane library to implement OSE for parameterized quantum circuits.  It is pronounced cozy/cosy',
     install_requires=['numpy', 'pennylane', 'torch', 'autograd'],
     python_requires='>=3.6',
     package_dir = {'qose': 'qose'},
