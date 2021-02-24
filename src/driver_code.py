@@ -26,9 +26,9 @@ if __name__ == "__main__":
               'data_set': 'moons',
               'nsteps': 20,
               'opt': qml.AdamOptimizer,
-              'batch_size': [25],
+              'batch_sizes': [25],
               'n_samples': 1500,
-              'learning_rate': [0.01],
+              'learning_rates': [0.01],
               'save_frequency': 1,
               'save_path': data_path
               }

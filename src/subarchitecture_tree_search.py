@@ -7,7 +7,7 @@ from sklearn import datasets
 from typing import List
 
 from circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
-from train_utils import train_circuit
+from train_utils import train_circuit, evaluate_w
 from plot_utils import plot_tree
 
 
@@ -229,6 +229,7 @@ def run_tree_architecture_search(config: dict):
                     print(f'Training leaf {v}')
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
-                    w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                    w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
                     #nx.set_node_attributes(G, {v: w_cost}, 'W')
                     nx.set_node_attributes(G, {v: w_cost,'weights':weights}, 'W')
+        # print(nx.get_node_attributes(G,'W'))
