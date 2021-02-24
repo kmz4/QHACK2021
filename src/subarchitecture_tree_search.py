@@ -3,13 +3,13 @@ from pennylane import numpy as np
 import pickle
 
 import networkx as nx
-from networkx.drawing.nx_agraph import graphviz_layout
 import matplotlib.pyplot as plt
 
 from sklearn import datasets
 
 from circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
 from train_utils import train_circuit
+from plot_utils import plot_tree
 
 
 def arbitrary_cost_fn():
@@ -118,23 +118,7 @@ def run_tree_architecture_search(config):
         if (SAVE_FREQUENCY>0) & ~(d%SAVE_FREQUENCY):
             nx.write_gpickle(G, config['save_path']+ f'/tree_depth_{d}.pickle')
         if PLOT_INTERMEDIATE_TREES:
-            fig, axs = plt.subplots(1, 1)
-            fig.set_size_inches(16, 8)
-            pos = graphviz_layout(G, prog='dot')
-            colors = nx.get_node_attributes(G, 'W')
-            node_color = list(colors.values())
-            vmin = min(node_color)
-            vmax = max(node_color)
-            nx.draw(G, pos=pos, arrows=True, with_labels=True, cmap='OrRd', node_color=node_color, linewidths=1,
-                    vmin=vmin, vmax=vmax, ax=axs)
-            axs.collections[0].set_edgecolor("#000000")
-
-            sm = plt.cm.ScalarMappable(cmap='OrRd', norm=plt.Normalize(vmin=vmin, vmax=vmax))
-
-            cb = plt.colorbar(sm)
-            cb.set_label('W-cost')
-            axs.set_title('Tree of costs')
-            plt.show()
+            plot_tree(G)
         # TODO: ADD EMBEDDINGS AT THE ROOT, PARSE THIS PROPERLY IN construct_circuit_from_leaf()
         if d < MIN_TREE_DEPTH:
             if d == 1:
