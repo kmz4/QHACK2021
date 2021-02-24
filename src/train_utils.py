@@ -32,27 +32,22 @@ def mse(labels, predictions):
 
 
 def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accuracy', **kwargs):
-    """Develop and train your very own variational quantum classifier.
-
-    Use the provided training data to train your classifier. The code you write
-    for this challenge should be completely contained within this function
-    between the # QHACK # comment markers. The number of qubits, choice of
-    variational ansatz, cost function, and optimization method are all to be
-    developed by you in this function.
-
+    """
+    train a circuit classifier
     Args:
         circuit (qml.QNode): A circuit that you want to train
+        parameter_shape: number of parameters to initialize in the circuit
         X_train (np.ndarray): An array of floats of size (M, n) to be used as training data.
         Y_train (np.ndarray): An array of size (M,) which are the categorical labels
-            associated to the training data. The categories are labeled by -1, 0, and 1.
-        X_test (np.ndarray): An array of floats of (B, n) to serve as testing data.
+            associated to the training data.
+
         kwargs: hyperparameters for the training (steps, batch_size, learning_rate)
 
     Returns:
-        (p,i,e,w): The number of parameters, the inference time (time to evaluate the accuracy), error rate (accuracy on the test set)
+        (W_,weights): W-coefficient, trained weights
     """
 
-    # Use this array to make a prediction for the labels of the data in X_test
+    # fix the seed while debugging
     np.random.seed(1337)
     def cost_fcn(params, circuit, ang_array, actual):
         '''
@@ -77,7 +72,7 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
         X_train_batch = X_train[batch_index]
         Y_train_batch = Y_train[batch_index]
         var, cost = opt.step_and_cost(lambda v: cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
-        print(cost)
+        #print(cost)
     end = time.time()
     cost_time = (end - start)
 
@@ -97,7 +92,6 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     W_ = np.abs((100. - len(var)) / (100.)) * np.abs((100. - inftime) / (100.)) * (1. / err_rate)
     return W_,var
 
-#
 def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     """
     together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
