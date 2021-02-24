@@ -21,6 +21,13 @@ cd QHACK2021
 pip install .
 ```
 
+To run QOSE from the terminal call
+
+```
+python3 driver_code.py
+```
+
+
 References
 
     De Wynter (2020) "An Approximation Algorithm for Optimal Subarchitecture Extraction" [arxiv.org/abs/2010.08512]
