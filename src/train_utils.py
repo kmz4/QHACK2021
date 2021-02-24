@@ -98,16 +98,17 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     return W_,var
 
 #
-def evaluate_w(circuit, n_params, X_train, Y_train, batch_sets=[], learning_rates=[], **kwargs):
+def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     """
     together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
     batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists
     """
-    hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
     Wmax = 0.0
     s = kwargs.get('nsteps', None)
     rate_type = kwargs.get('rate_type', None)
-
+    batch_sets = kwargs.get('batch_size')
+    learning_rates=kwargs.get('learning_rate')
+    hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
     for idx, sdx in hyperparameters:
         wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, X_test, Y_test, s=s,
                                                  batch_size=idx, rate_type=rate_type, learning_rate=sdx)
