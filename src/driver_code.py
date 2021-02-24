@@ -1,5 +1,5 @@
 from subarchitecture_tree_search import run_tree_architecture_search
-
+import pennylane as qml
 
 if __name__=="__main__":
 
@@ -14,8 +14,8 @@ if __name__=="__main__":
               'data_set': 'moons',
               'nsteps': 20,
               'opt': qml.AdamOptimizer,
-              'opt_opts': {'stepsize':0.01},
               'batch_size':100,
-              'n_samples':1500
+              'n_samples':1500,
+              'learning_rate': 0.01
               }
     run_tree_architecture_search(config)
