@@ -5,7 +5,30 @@ import itertools
 import time
 
 
-# TODO: CIRCUIT TRAINING GOES HERE
+def hinge_loss(labels, predictions, type='L2'):
+    loss = 0
+    for l, p in zip(labels, predictions):
+        if type == 'L1':
+            loss = loss + np.abs(l - p)  # L1 loss
+        elif type == 'L2':
+            loss = loss + (l - p) ** 2  # L2 loss
+    loss = loss / labels.shape[0]
+    return loss
+
+
+def accuracy(labels, predictions):
+    loss = 0
+    for l, p in zip(labels, predictions):
+        loss += np.argmax(l) == np.argmax(p)
+    return loss / (labels.shape[0])
+
+
+def mse(labels, predictions):
+    # print(labels.shape, predictions.shape)
+    loss = 0
+    for l, p in zip(labels, predictions):
+        loss += np.sum((l - p) ** 2)
+    return loss / labels.shape[0]
 
 
 def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accuracy', **kwargs):
@@ -30,29 +53,8 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     """
 
     # Use this array to make a prediction for the labels of the data in X_test
-    def hinge_loss(labels, predictions, type='L2'):
-        loss = 0
-        for l, p in zip(labels, predictions):
-            if type == 'L1':
-                loss = loss + np.abs(l - p)  # L1 loss
-            elif type == 'L2':
-                loss = loss + (l - p) ** 2  # L2 loss
-        loss = loss / len(labels)
-        return loss
-
-    def accuracy(labels, predictions):
-
-        loss = 0
-        tol = 0.05
-        # tol = 0.1
-        for l, p in zip(labels, predictions):
-            if abs(l - p) < tol:
-                loss = loss + 1
-        loss = loss / len(labels)
-
-        return loss
-
-    def cost_fcn(params, circuit=None, ang_array=[], actual=[]):
+    np.random.seed(1337)
+    def cost_fcn(params, circuit, ang_array, actual):
         '''
         use MAE to start
         '''
@@ -61,11 +63,10 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
         # w = params[-n:]
         # theta = params[:-n]
 
-        predictions = [circuit(params, x) for x in ang_array]
-        return hinge_loss(actual, predictions)
+        predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
+        return mse(actual, predictions)
 
-
-    var = np.random.random(parameter_shape) - 2.5
+    var = np.random.randn(*parameter_shape)
     batch_size = kwargs['batch_size']
     num_train = len(Y_train)
     validation_size = 3 * kwargs['batch_size']
@@ -80,13 +81,12 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     end = time.time()
     cost_time = (end - start)
 
-
     if rate_type == 'accuracy':
         validation_batch = np.random.randint(0, num_train, (validation_size,))
         X_validation_batch = X_train[validation_batch]
         Y_validation_batch = Y_train[validation_batch]
         start = time.time()  # add in timeit function from Wbranch
-        predictions = [circuit(var, x) for x in X_validation_batch]
+        predictions = np.stack([circuit(var, x) for x in X_validation_batch])
         end = time.time()
         inftime = (end - start) / len(X_validation_batch)
         err_rate = 1.0 - accuracy(predictions, Y_validation_batch)
@@ -95,22 +95,22 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
         inftime = cost_time
     # QHACK #
     W_ = np.abs((100. - len(var)) / (100.)) * np.abs((100. - inftime) / (100.)) * (1. / err_rate)
-    return len(var), inftime, err_rate, W_, var
+    return W_
 
 #
-# def loop_over_hyperparameters(circuit, n_params, X_train, Y_train, batch_sets, learning_rates, **kwargs):
-#     """
-#     together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
-#     """
-#     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
-#     Wmax = 0.0
-#     s = kwargs.get('nsteps', None)
-#     rate_type = kwargs.get('rate_type', None)
-#
-#     for idx, sdx in hyperparameters:
-#         p, i, er, wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, X_test, Y_test, s=s,
-#                                                  batch_size=idx, rate_type=rate_type, learning_rate=sdx)
-#         if wtemp >= Wmax:
-#             Wmax = wtemp
-#             saved_weights = weights
-#     return Wmax, saved_weights
+def loop_over_hyperparameters(circuit, n_params, X_train, Y_train, batch_sets, learning_rates, **kwargs):
+    """
+    together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
+    """
+    hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
+    Wmax = 0.0
+    s = kwargs.get('nsteps', None)
+    rate_type = kwargs.get('rate_type', None)
+
+    for idx, sdx in hyperparameters:
+        p, i, er, wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, X_test, Y_test, s=s,
+                                                 batch_size=idx, rate_type=rate_type, learning_rate=sdx)
+        if wtemp >= Wmax:
+            Wmax = wtemp
+            saved_weights = weights
+    return Wmax, saved_weights
