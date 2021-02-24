@@ -5,14 +5,19 @@ import os
 import pickle
 
 if __name__ == "__main__":
+    # Create a unique name for your experiment
     EXPERIMENT_NAME = 'alpha'
+
+    # Create a directory to store the data
     if not os.path.exists('data'):
         os.mkdir('data/')
+
     data_path = f'data/{EXPERIMENT_NAME}'
     if not os.path.exists(data_path):
         os.mkdir(data_path)
+
+    # Create a configuration file for the tree prune algorithm
     config = {'nqubits': 3,
-              'nclasses': 2,
               'min_tree_depth': 3,
               'max_tree_depth': 8,
               'prune_rate': 0.3,
@@ -27,6 +32,10 @@ if __name__ == "__main__":
               'save_frequency': 1,
               'save_path': data_path
               }
+
+    # Save the configuration file so that we can remember what we did
     with open(data_path + '/config.pickle', 'wb') as f:
         pickle.dump(config, f)
+
+    # Execute the algorithm
     run_tree_architecture_search(config)
