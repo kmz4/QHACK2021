@@ -104,8 +104,7 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     learning_rates=kwargs.get('learning_rate')
     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
     for idx, sdx in hyperparameters:
-        wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, X_test, Y_test, s=s,
-                                                 batch_size=idx, rate_type=rate_type, learning_rate=sdx)
+        wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, s=s, batch_size=idx, rate_type=rate_type, learning_rate=sdx)
         if wtemp >= Wmax:
             Wmax = wtemp
             saved_weights = weights
