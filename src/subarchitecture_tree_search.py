@@ -200,9 +200,10 @@ def run_tree_architecture_search(config: dict):
                     print(f'Training leaf {v}')
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
-                    w_cost = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                    w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
                     # Add the w_cost to the node so we can use it later for pruning
-                    nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    #nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    nx.set_node_attributes(G, {v: w_cost,'weights':weights}, 'W')
 
         else:
             # Check that we are at the correct prune depth step.
@@ -216,9 +217,10 @@ def run_tree_architecture_search(config: dict):
                     print(f'Training leaf {v}')
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
-                    w_cost = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                    w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
                     # Add the w_cost to the node so we can use it later for pruning
-                    nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    #nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    nx.set_node_attributes(G, {v: w_cost,'weights':weights}, 'W')
 
             else:
                 print('Grow Tree')
@@ -227,5 +229,6 @@ def run_tree_architecture_search(config: dict):
                     print(f'Training leaf {v}')
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
-                    w_cost = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
-                    nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                    #nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    nx.set_node_attributes(G, {v: w_cost,'weights':weights}, 'W')
