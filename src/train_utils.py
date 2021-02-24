@@ -95,7 +95,7 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
         inftime = cost_time
     # QHACK #
     W_ = np.abs((100. - len(var)) / (100.)) * np.abs((100. - inftime) / (100.)) * (1. / err_rate)
-    return W_
+    return W_,var
 
 #
 def evaluate_w(circuit, n_params, X_train, Y_train, batch_sets=[], learning_rates=[], **kwargs):
@@ -109,7 +109,7 @@ def evaluate_w(circuit, n_params, X_train, Y_train, batch_sets=[], learning_rate
     rate_type = kwargs.get('rate_type', None)
 
     for idx, sdx in hyperparameters:
-        p, i, er, wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, X_test, Y_test, s=s,
+        wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, X_test, Y_test, s=s,
                                                  batch_size=idx, rate_type=rate_type, learning_rate=sdx)
         if wtemp >= Wmax:
             Wmax = wtemp
