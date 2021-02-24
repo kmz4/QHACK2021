@@ -65,6 +65,8 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     batch_size = kwargs['batch_size']
     num_train = len(Y_train)
     validation_size = 3 * kwargs['batch_size']
+    #opt = kwargs['opt']
+    #opt=opt(kwargs['learning_rate'])
     opt = qml.AdamOptimizer(kwargs['learning_rate'])
     start = time.time()
     for _ in range(kwargs['nsteps']):
@@ -103,7 +105,7 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     batch_sets = kwargs.get('batch_size')
     learning_rates=kwargs.get('learning_rate')
     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
-    for idx, sdx in hyperparameters:
+    for idx, sdx in hyperparameters_space:
         wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, s=s, batch_size=idx, rate_type=rate_type, learning_rate=sdx)
         if wtemp >= Wmax:
             Wmax = wtemp
