@@ -30,6 +30,8 @@ def embedding_1(X, wires):
         r_ = len(wires)//len(X)
         large_features = np.tile(X,r_)
         qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation='Y') # replace with more general embedding
+    else:
+        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation='Y') # replace with more general embedding        
     qml.templates.embeddings.AngleEmbedding(X, wires=wires)
 
 
