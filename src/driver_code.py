@@ -25,7 +25,7 @@ if __name__ == "__main__":
               'plot_trees': False,
               'data_set': 'moons',
               'nsteps': 5,
-              'opt': qml.AdamOptimizer,
+              'optim': qml.AdamOptimizer,
               'batch_sizes': [25],
               'n_samples': 1500,
               'learning_rates': [0.01],
