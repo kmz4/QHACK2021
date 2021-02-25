@@ -73,10 +73,10 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         var = np.hstack((np.zeros(parameter_shape),np.random.randn(kwargs['nqubits'])))
     rate_type = kwargs['rate_type']
     inf_time = kwargs['inf_time']
-    print('inf_time',inf_time)
+     
     optim = kwargs['optim']
     numcnots = kwargs['numcnots']
-    print('numcnots',numcnots)
+     
     Tmax = kwargs['Tmax'] #Tmax[0] is maximum parameter size, Tmax[1] maximum inftime (timeit),Tmax[2] maximum number of entangling gates
     num_train = len(Y_train)
     validation_size = 3 * batch_size
