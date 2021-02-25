@@ -49,31 +49,28 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
 
     # fix the seed while debugging
     np.random.seed(1337)
-    def cost_fcn(params, circuit, ang_array, actual):
+    def cost_fcn(params, circuit, ang_array, actual,**kwargs):
         '''
         use MAE to start
         '''
-        # labels = {2: -1, 1: 1, 0: 0}
-        # n = len(ang_array[0])
-        # w = params[-n:]
-        # theta = params[:-n]
-
-        predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
+        if kwargs['readout_layer']=='one-hot':
+            predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
+        elif kwargs['readout_layer']=='weighted_neuron':
+            from autograd.numpy import exp
+            n = kwargs.get('nqubits')
+            w = params[-n:]
+            theta = params[:-n]
+            predictions = [2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1. for x in ang_array]
         return mse(actual, predictions)
-    
 
-<<<<<<< HEAD
-    #var = np.random.randn(*parameter_shape)
-    var = 0.01*np.ones(tuple([*parameter_shape]))
-    #batch_size = kwargs['batch_size']
-=======
-    var = 0.01*np.ones(tuple([*parameter_shape]))
-
+    if kwargs['readout_layer']=='one-hot':
+        var = np.zeros(tuple(*parameter_shape)
+    elif kwargs['readout_layer']=="weighted_neuron":
+        var = np.hstack((np.zeros(*parameter_shape),np.random.randn(*kwargs['nqubits'])))
     rate_type = kwargs['rate_type']
     inf_time = kwargs['inf_time']
     optim = kwargs['optim']
     Tmax = kwargs['Tmax'] #Tmax[0] is maximum parameter size, Tmax[1] maximum inftime (timeit),Tmax[2] maximum number of entangling gates
->>>>>>> 84ca045e5ea49010771ac7808650647a15183413
     num_train = len(Y_train)
     validation_size = 3 * batch_size
     opt = optim(stepsize=learning_rate) #all optimizers in autograd module take in argument stepsize, so this works for all
@@ -91,7 +88,13 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
         X_validation_batch = X_train[validation_batch]
         Y_validation_batch = Y_train[validation_batch]
         start = time.time()  # add in timeit function from Wbranch
-        predictions = np.stack([circuit(var, x) for x in X_validation_batch])
+        if kwargs['readout_layer']=='one-hot':
+            predictions = np.stack([circuit(var, x) for x in X_validation_batch])
+        elif kwargs['readout_layer']=='weighted_neuron':
+            n = kwargs.get('nqubits')
+            w = params[-n:]
+            theta = params[:-n]
+            prediction = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1.,0)) for x in X_validation_batch]
         end = time.time()
         inftime = (end - start) / len(X_validation_batch)
         err_rate = 1.0 - accuracy(predictions, Y_validation_batch)+10**-7 #add small epsilon to prevent divide by 0 errors
@@ -107,7 +110,7 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
     elif inf_time=='numcnots':
 
         W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[2] - numcnots) / (Tmax[2])) * (1. / err_rate)
-        
+
     return W_,var
 
 def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):

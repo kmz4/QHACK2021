@@ -32,8 +32,9 @@ if __name__ == "__main__":
               'save_frequency': 1,
               'save_path': data_path,
               'circuit_type':'schuld',
-              'fill':'redundant',
-              'rate_type': 'accuracy',
+              'fill':'redundant', # or 'pad'
+              'rate_type': 'accuracy', # or 'batch_cost'
+              'readout_layer': 'one-hot',  #or 'weighted_neuron'
               }
 
     # Save the configuration file so that we can remember what we did
