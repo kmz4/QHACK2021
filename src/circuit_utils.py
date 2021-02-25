@@ -55,5 +55,7 @@ def embedding_1(X, wires,fill='redundant'):
 
 # TODO: ADD W-COST HERE
 
-string_to_layer_mapping = {'ZZ': zz_layer, 'X': x_layer, 'Y': y_layer,'Z':z_layer,'hw_CNOT':path_CNOT_layer}
+string_to_layer_mapping = {'ZZ': zz_layer,\
+                        'X': x_layer, 'Y': y_layer,'Z':z_layer,\
+                        'hw_CNOT':path_CNOT_layer}
 string_to_embedding_mapping = {'E1': embedding_1}

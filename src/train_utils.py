@@ -31,7 +31,7 @@ def mse(labels, predictions):
     return loss / labels.shape[0]
 
 
-def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_size, learning_rate,**kwargs):
+def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learning_rate,**kwargs):
     """
     train a circuit classifier
     Args:
@@ -49,21 +49,28 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
 
     # fix the seed while debugging
     np.random.seed(1337)
-    def cost_fcn(params, circuit, ang_array, actual):
+    def ohe_cost_fcn(params, circuit, ang_array, actual):
         '''
         use MAE to start
         '''
-        # labels = {2: -1, 1: 1, 0: 0}
-        # n = len(ang_array[0])
-        # w = params[-n:]
-        # theta = params[:-n]
-
         predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
         return mse(actual, predictions)
-    
 
-    var = 0.01*np.ones(tuple([*parameter_shape]))
+    def wn_cost_fcn(params, circuit, ang_array, actual):
+        '''
+        use MAE to start
+        '''
+        from autograd.numpy import exp
+        n = kwargs.get('nqubits')
+        w = params[-n:]
+        theta = params[:-n]
+        predictions = [2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1. for x in ang_array]
+        return mse(actual, predictions)
 
+    if kwargs['readout_layer']=='one-hot':
+        var = np.zeros(parameter_shape)
+    elif kwargs['readout_layer']=="weighted_neuron":
+        var = np.hstack((np.zeros(parameter_shape),np.random.randn(kwargs['nqubits'])))
     rate_type = kwargs['rate_type']
     inf_time = kwargs['inf_time']
     optim = kwargs['optim']
@@ -76,7 +83,10 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
         batch_index = np.random.randint(0, num_train, (batch_size,))
         X_train_batch = X_train[batch_index]
         Y_train_batch = Y_train[batch_index]
-        var, cost = opt.step_and_cost(lambda v: cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
+        if kwargs['readout_layer']=='one-hot':
+            var, cost = opt.step_and_cost(lambda v: ohe_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
+        elif kwargs['readout_layer']=='weighted_neuron':
+            var, cost = opt.step_and_cost(lambda v: wn_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
     end = time.time()
     cost_time = (end - start)
 
@@ -85,12 +95,18 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
         X_validation_batch = X_train[validation_batch]
         Y_validation_batch = Y_train[validation_batch]
         start = time.time()  # add in timeit function from Wbranch
-        predictions = np.stack([circuit(var, x) for x in X_validation_batch])
+        if kwargs['readout_layer']=='one-hot':
+            predictions = np.stack([circuit(var, x) for x in X_validation_batch])
+        elif kwargs['readout_layer']=='weighted_neuron':
+            n = kwargs.get('nqubits')
+            w = params[-n:]
+            theta = params[:-n]
+            prediction = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1.,0)) for x in X_validation_batch]
         end = time.time()
         inftime = (end - start) / len(X_validation_batch)
-        err_rate = 1.0 - accuracy(predictions, Y_validation_batch)+10**-7 #add small epsilon to prevent divide by 0 errors
+        err_rate = (1.0 - accuracy(predictions, Y_validation_batch))+10**-7 #add small epsilon to prevent divide by 0 errors
     elif kwargs['rate_type'] == 'batch_cost':
-        err_rate = cost
+        err_rate = (cost) + 10**-7 #add small epsilon to prevent divide by 0 errors
         inftime = cost_time
     # QHACK #
 
@@ -99,9 +115,9 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
         W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[1] - inftime) / (Tmax[1])) * (1. / err_rate)
 
     elif inf_time=='numcnots':
+        nc_ = kwargs.get('numcnots',0)
+        W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[2] - nc_) / (Tmax[2])) * (1. / err_rate)
 
-        W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[2] - numcnots) / (Tmax[2])) * (1. / err_rate)
-        
     return W_,var
 
 def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
