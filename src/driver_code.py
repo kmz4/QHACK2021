@@ -34,7 +34,7 @@ if __name__ == "__main__":
               'save_timing': True,
               'circuit_type':'schuld',
               'Tmax': [100,100,100],
-              'inf_time':'timeit',
+              'inf_time':'numcnots',
               'fill':'redundant', # or 'pad'
               'rate_type': 'accuracy', # or 'batch_cost'
               'readout_layer': 'one-hot',  #or 'weighted_neuron'

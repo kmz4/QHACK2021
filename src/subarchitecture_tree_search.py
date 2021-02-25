@@ -227,6 +227,7 @@ def run_tree_architecture_search(config: dict):
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
                     circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
+                    config['numcnots']=numcnots
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
@@ -260,6 +261,7 @@ def run_tree_architecture_search(config: dict):
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
                     circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
+                    config['numcnots']=numcnots
                     # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
@@ -284,6 +286,7 @@ def run_tree_architecture_search(config: dict):
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
                     circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
+                    config['numcnots']=numcnots
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
