@@ -31,10 +31,14 @@ if __name__ == "__main__":
               'learning_rates': [0.01],
               'save_frequency': 1,
               'save_path': data_path,
+<<<<<<< HEAD
               'circuit_type':'schuld',
               'fill':'redundant', # or 'pad'
               'rate_type': 'accuracy', # or 'batch_cost'
               'readout_layer': 'one-hot',  #or 'weighted_neuron'
+=======
+              'circuit_type':'schuld'
+>>>>>>> build in functionality to switch between architecture classes
               }
 
     # Save the configuration file so that we can remember what we did

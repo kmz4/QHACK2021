@@ -181,11 +181,18 @@ def run_tree_architecture_search(config: dict):
     G.nodes['ROOT']["W"]=0.0
     #nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
     # Define allowed layers
+<<<<<<< HEAD
     ct_ = config.get('circuit_type',None)
     if ct_=='schuld':
         possible_layers = ['ZZ', 'X', 'Y','Z']
     if ct_=='hardware':
         possible_layers = ['hw_CNOT','X','Y','Z']
+=======
+    if circuit_type=='schuld':
+        possible_layers = ['ZZ', 'X', 'Y']
+    if circuit_type=='hardware':
+        possible_layers = ['hw_CNOT','X','Y']
+>>>>>>> build in functionality to switch between architecture classes
     possible_embeddings = ['E1', ]
     assert all([l in string_to_layer_mapping.keys() for l in possible_layers]), 'No valid mapping from string to function found'
     assert all([l in string_to_embedding_mapping.keys() for l in possible_embeddings]), 'No valid mapping from string to function found'
