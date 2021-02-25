@@ -170,7 +170,7 @@ def run_tree_architecture_search(config: dict):
         # one hot encode labels
         y_train_ohe = np.zeros((y_train.size, y_train.max() + 1))
         y_train_ohe[np.arange(y_train.size), y_train] = 1
-    elif config['weighted_neuron']:
+    elif config['readout_layer']=='weighted_neuron':
         y_train_ohe = y_train
     # automatically determine the number of classes
     NCLASSES = len(np.unique(y_train))
