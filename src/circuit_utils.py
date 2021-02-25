@@ -4,13 +4,13 @@ from pennylane import numpy as np
 def cycle_CNOT_layer(wires):
     nq = len(wires)
     for n in range(nq-1):
-        CNOT(wires=[n,n+1])
-    CNOT(wires=[nq-1,0])
+        qml.CNOT(wires=[n,n+1])
+    qml.CNOT(wires=[nq-1,0])
 
 def path_CNOT_layer(wires):
     nq = len(wires)
     for n in range(nq-1):
-        CNOT(wires=[n,n+1])
+        qml.CNOT(wires=[n,n+1])
 
 def zz_layer(wires, params):
     nq = len(wires)
