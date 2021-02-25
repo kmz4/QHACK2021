@@ -84,7 +84,7 @@ def tree_cost_of_path(G: nx.DiGraph, leaf: str) -> float:
     return sum([G.nodes[node]['W'] for node in paths])
 
 
-def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device):
+def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device, config: dict):
     """
     Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
 
@@ -109,8 +109,13 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
         return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
 
     # Return the shape of the parameters so we can initialize them correctly later on.
-    params_shape = (nqubits, len(architecture))
-    numcnots = architecture.count('ZZ')*2*nqubits #count the number of cnots
+    if config['circuit_type']=='schuld':
+        params_shape = (nqubits, len(architecture))
+        numcnots = architecture.count('ZZ')*2*nqubits #count the number of cnots
+    elif config['circuit_type']=='hardware':
+        param_gates = [x for x in architecture if x!='CNOT']
+        params_shape = (nqubits, len(param_gates))
+        numcnots = architecture.count('CNOT')*(nqubits-1) #Each CNOT layer has (n-1) CNOT gates
     # create and return a QNode
     return qml.QNode(circuit_from_architecture, dev), params_shape, numcnots #give back the number of cnots
 
@@ -181,18 +186,13 @@ def run_tree_architecture_search(config: dict):
     G.nodes['ROOT']["W"]=0.0
     #nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
     # Define allowed layers
-<<<<<<< HEAD
     ct_ = config.get('circuit_type',None)
     if ct_=='schuld':
         possible_layers = ['ZZ', 'X', 'Y','Z']
+        config['parameterized_gates']= ['ZZ', 'X', 'Y','Z']
     if ct_=='hardware':
         possible_layers = ['hw_CNOT','X','Y','Z']
-=======
-    if circuit_type=='schuld':
-        possible_layers = ['ZZ', 'X', 'Y']
-    if circuit_type=='hardware':
-        possible_layers = ['hw_CNOT','X','Y']
->>>>>>> build in functionality to switch between architecture classes
+        config['parameterized_gates']=['X','Y','Z']
     possible_embeddings = ['E1', ]
     assert all([l in string_to_layer_mapping.keys() for l in possible_layers]), 'No valid mapping from string to function found'
     assert all([l in string_to_embedding_mapping.keys() for l in possible_embeddings]), 'No valid mapping from string to function found'
@@ -226,7 +226,7 @@ def run_tree_architecture_search(config: dict):
                 for v in leaves_at_depth_d[d]:
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
-                    circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                    circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
@@ -259,7 +259,7 @@ def run_tree_architecture_search(config: dict):
                 for v in leaves_at_depth_d[d]:
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
-                    circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                    circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
                     # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
@@ -283,7 +283,7 @@ def run_tree_architecture_search(config: dict):
                 for v in leaves_at_depth_d[d]:
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
-                    circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                    circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
