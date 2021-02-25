@@ -5,9 +5,9 @@ import networkx as nx
 
 from sklearn import datasets
 from typing import List
-
+import operator
 from circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
-from train_utils import train_circuit
+from train_utils import train_circuit,evaluate_w
 from plot_utils import plot_tree
 
 
@@ -163,12 +163,16 @@ def run_tree_architecture_search(config: dict):
     # automatically determine the number of classes
     NCLASSES = len(np.unique(y_train))
     assert NQUBITS >= NCLASSES, 'The number of qubits must be equal or larger than the number of classes'
-
+    save_timing = config.get('save_timing',False)
+    if save_timing:
+        print('saving timing info')
+        import time
     # Create a directed graph.
     G = nx.DiGraph()
     # Add the root
     G.add_node("ROOT")
-    nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
+    G.nodes['ROOT']["W"]=0.0
+    #nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
     # Define allowed layers
     possible_layers = ['ZZ', 'X', 'Y']
     possible_embeddings = ['E1', ]
@@ -192,43 +196,95 @@ def run_tree_architecture_search(config: dict):
                 tree_grow_root(G, leaves_at_depth_d, possible_embeddings)
                 # At the embedding level we don't need to train because there are no params.
                 for v in leaves_at_depth_d[d]:
-                    nx.set_node_attributes(G, {v: 1.0}, 'W')
+                    G.nodes[v]['W'] = 1.0
+                print('current graph: ',list(G.nodes(data=True)))
+                    #nx.set_node_attributes(G, {v: 1.0}, 'W')
             else:
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
+                best_arch = max(nx.get_node_attributes(G,'W').items(), key=operator.itemgetter(1))[0]
+                print('Current best architecture: ',best_arch)
+                print('max W:', G.nodes[best_arch]['W'])
                 # For every leaf, create a circuit and run the optimization.
                 for v in leaves_at_depth_d[d]:
-                    print(f'Training leaf {v}')
+                    #print(f'Training leaf {v}')
+                    #print('current graph: ',list(G.nodes(data=True)))
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
-                    w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                    if save_timing:
+                        start=time.time()
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        end=time.time()
+                        clock_time=end-start
+                        attrs = {"W": w_cost, "weights": weights,"timing":clock_time}
+                    else:
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        attrs = {"W": w_cost, "weights": weights.numpy()}
                     # Add the w_cost to the node so we can use it later for pruning
                     #nx.set_node_attributes(G, {v: w_cost}, 'W')
-                    nx.set_node_attributes(G, {v: w_cost,'weights':weights}, 'W')
+                    #nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    for kdx in attrs.keys():
+                        G.nodes[v][kdx]=attrs[kdx]
+                    #nx.set_node_attributes(G, attrs)
 
         else:
             # Check that we are at the correct prune depth step.
             if not (d - MIN_TREE_DEPTH) % PRUNE_DEPTH_STEP:
                 print('Prune Tree')
+                best_arch = max(nx.get_node_attributes(G,'W').items(), key=operator.itemgetter(1))[0]
+                print('Current best architecture: ',best_arch)
+                print('max W:', G.nodes[best_arch]['W'])
+                #print(nx.get_node_attributes(G,'W'))
                 tree_prune(G, leaves_at_depth_d, d, PRUNE_RATE)
                 print('Grow Pruned Tree')
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
                 # For every leaf, create a circuit and run the optimization.
                 for v in leaves_at_depth_d[d]:
-                    print(f'Training leaf {v}')
+                    #print(f'Training leaf {v}')
+                    #print('current graph: ',list(G.nodes(data=True)))
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
-                    w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                    if save_timing:
+                        start=time.time()
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        end=time.time()
+                        clock_time=end-start
+                        attrs = {"W": w_cost, "weights": weights.numpy(),"timing":clock_time}
+                    else:
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        attrs = {"W": w_cost, "weights": weights.numpy()}
                     # Add the w_cost to the node so we can use it later for pruning
-                    #nx.set_node_attributes(G, {v: w_cost}, 'W')
-                    nx.set_node_attributes(G, {v: w_cost,'weights':weights}, 'W')
-
+                    #nx.set_node_attributes(G, attrs)
+                    for kdx in attrs.keys():
+                        G.nodes[v][kdx]=attrs[kdx]
             else:
                 print('Grow Tree')
+                best_arch = max(nx.get_node_attributes(G,'W').items(), key=operator.itemgetter(1))[0]
+                print('Current best architecture: ',best_arch)
+                print('max W:', G.nodes[best_arch]['W'])
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
                 for v in leaves_at_depth_d[d]:
-                    print(f'Training leaf {v}')
+                    #print(f'Training leaf {v}')
+                    #print('current graph: ',list(G.nodes(data=True)))
                     circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
-                    w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                    if save_timing:
+                        start=time.time()
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        end=time.time()
+                        clock_time=end-start
+                        attrs = {"W": w_cost, "weights": weights.numpy(),"timing":clock_time}
+                    else:
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        attrs = {"W": w_cost, "weights": weights.numpy()}
+                    # Add the w_cost to the node so we can use it later for pruning
                     #nx.set_node_attributes(G, {v: w_cost}, 'W')
-                    nx.set_node_attributes(G, {v: w_cost,'weights':weights}, 'W')
+                    #nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    #nx.set_node_attributes(G, attrs)
+                    for kdx in attrs.keys():
+                        G.nodes[v][kdx]=attrs[kdx]
+    best_arch = max(nx.get_node_attributes(G,'W').items(), key=operator.itemgetter(1))[0]
+    print('architecture with max W: ',best_arch)
+    print('max W:', G.nodes[best_arch]['W'])
+    print('weights: ',G.nodes[best_arch]['weights'])
+    import pandas as pd
+    pd.DataFrame.from_dict(nx.get_node_attributes(G,'W'),orient='index').to_csv('tree_weights.csv')

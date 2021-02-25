@@ -1,5 +1,5 @@
 import pennylane as qml
-
+from pennylane import numpy as np
 
 def zz_layer(wires, params):
     nq = len(wires)
@@ -26,6 +26,10 @@ def y_layer(wires, params):
         qml.RY(params[n], wires=[n, ])
 
 def embedding_1(X, wires):
+    if len(X)<len(wires):
+        r_ = len(wires)//len(X)
+        large_features = np.tile(X,r_)
+        qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation='Y') # replace with more general embedding
     qml.templates.embeddings.AngleEmbedding(X, wires=wires)
 
 

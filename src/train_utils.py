@@ -61,7 +61,8 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
         predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
         return mse(actual, predictions)
 
-    var = np.random.randn(*parameter_shape)
+    #var = np.random.randn(*parameter_shape)
+    var = 0.01*np.ones(*parameter_shape)
     batch_size = kwargs['batch_size']
     num_train = len(Y_train)
     validation_size = 3 * kwargs['batch_size']
@@ -86,7 +87,7 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
         predictions = np.stack([circuit(var, x) for x in X_validation_batch])
         end = time.time()
         inftime = (end - start) / len(X_validation_batch)
-        err_rate = 1.0 - accuracy(predictions, Y_validation_batch)
+        err_rate = 1.0 - accuracy(predictions, Y_validation_batch)+10**-7 #add small epsilon to prevent divide by 0 errors
     elif rate_type == 'batch_cost':
         err_rate = cost
         inftime = cost_time
@@ -105,8 +106,8 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     batch_sets = kwargs.get('batch_size')
     learning_rates=kwargs.get('learning_rate')
     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
-    for idx, sdx in hyperparameters_space:
-        wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, s=s, batch_size=idx, rate_type=rate_type, learning_rate=sdx)
+    for idx, sdx in hyperparameter_space:
+        wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, nsteps=s, batch_size=idx, rate_type=rate_type, learning_rate=sdx)
         if wtemp >= Wmax:
             Wmax = wtemp
             saved_weights = weights
