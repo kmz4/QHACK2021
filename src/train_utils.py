@@ -36,17 +36,32 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
     train a circuit classifier
     Args:
         circuit (qml.QNode): A circuit that you want to train
-        parameter_shape: number of parameters to initialize in the circuit
+        parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+        the second one is the number of layers in the circuit architecture. 
         X_train (np.ndarray): An array of floats of size (M, n) to be used as training data.
         Y_train (np.ndarray): An array of size (M,) which are the categorical labels
             associated to the training data.
 
-        kwargs: hyperparameters for the training (steps, batch_size, learning_rate)
+        batch_size (int): Batch size for the circuit training.
+
+        learning_rate (float): The learning rate/step size of the optimizer.
+
+        kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
+
+        nsteps (int) : Number of training steps.
+
+        optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
+                Pass as qml.OptimizerName .
+        
+        
+
+
+ 
 
     Returns:
         (W_,weights): W-coefficient, trained weights
     """
-
+    print('batch_size',type(batch_size))
     # fix the seed while debugging
     np.random.seed(1337)
     def ohe_cost_fcn(params, circuit, ang_array, actual):
@@ -73,7 +88,7 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         var = np.hstack((np.zeros(parameter_shape),np.random.randn(kwargs['nqubits'])))
     rate_type = kwargs['rate_type']
     inf_time = kwargs['inf_time']
-     
+    print(parameter_shape,'parametershape')
     optim = kwargs['optim']
     numcnots = kwargs['numcnots']
      
