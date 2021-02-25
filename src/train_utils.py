@@ -31,7 +31,7 @@ def mse(labels, predictions):
     return loss / labels.shape[0]
 
 
-def train_circuit(circuit, parameter_shape, X_train, Y_train, batch_size, learning_rate,**kwargs):
+def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_size, learning_rate,**kwargs):
     """
     train a circuit classifier
     Args:
@@ -60,20 +60,23 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, batch_size, learni
 
         predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
         return mse(actual, predictions)
+    
 
-    #var = np.random.randn(*parameter_shape)
     var = 0.01*np.ones(tuple([*parameter_shape]))
-    #batch_size = kwargs['batch_size']
+
+    rate_type = kwargs['rate_type']
+    inf_time = kwargs['inf_time']
+    optim = kwargs['optim']
+    Tmax = kwargs['Tmax'] #Tmax[0] is maximum parameter size, Tmax[1] maximum inftime (timeit),Tmax[2] maximum number of entangling gates
     num_train = len(Y_train)
     validation_size = 3 * batch_size
-    opt = qml.AdamOptimizer(learning_rate)
+    opt = optim(stepsize=learning_rate) #all optimizers in autograd module take in argument stepsize, so this works for all
     start = time.time()
     for _ in range(kwargs['nsteps']):
         batch_index = np.random.randint(0, num_train, (batch_size,))
         X_train_batch = X_train[batch_index]
         Y_train_batch = Y_train[batch_index]
         var, cost = opt.step_and_cost(lambda v: cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
-        #print(cost)
     end = time.time()
     cost_time = (end - start)
 
@@ -90,7 +93,15 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, batch_size, learni
         err_rate = cost
         inftime = cost_time
     # QHACK #
-    W_ = np.abs((100. - len(var)) / (100.)) * np.abs((100. - inftime) / (100.)) * (1. / err_rate)
+
+    if inf_time =='timeit':
+
+        W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[1] - inftime) / (Tmax[1])) * (1. / err_rate)
+
+    elif inf_time=='numcnots':
+
+        W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[2] - numcnots) / (Tmax[2])) * (1. / err_rate)
+        
     return W_,var
 
 def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
@@ -103,7 +114,7 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     learning_rates=kwargs.get('learning_rates')
     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
     for idx, sdx in hyperparameter_space:
-        wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, batch_size=idx, learning_rate=sdx, **kwargs)
+        wtemp, weights = train_circuit(circuit, n_params,X_train, Y_train, batch_size=idx, learning_rate=sdx, **kwargs)
         if wtemp >= Wmax:
             Wmax = wtemp
             saved_weights = weights

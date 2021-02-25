@@ -25,7 +25,7 @@ if __name__ == "__main__":
               'plot_trees': False,
               'data_set': 'moons',
               'nsteps': 5,
-              'opt': qml.AdamOptimizer,
+              'optim': qml.AdamOptimizer,
               'batch_sizes': [25],
               'n_samples': 1500,
               'learning_rates': [0.01],
@@ -34,6 +34,8 @@ if __name__ == "__main__":
               'circuit_type':'schuld',
               'fill':'redundant',
               'rate_type': 'accuracy',
+              'Tmax': [100,100,100],
+              'inf_time':'timeit'
               }
 
     # Save the configuration file so that we can remember what we did
