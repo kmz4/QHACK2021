@@ -31,7 +31,7 @@ def mse(labels, predictions):
     return loss / labels.shape[0]
 
 
-def train_circuit(circuit, parameter_shape, X_train, Y_train, batch_size, learning_rate,**kwargs):
+def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_size, learning_rate,**kwargs):
     """
     train a circuit classifier
     Args:
@@ -67,9 +67,12 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, batch_size, learni
  
     #batch_size = kwargs['batch_size']  
     rate_type = kwargs['rate_type']
+    optim = kwargs['optim']
+    Tmax = kwargs['Tmax'] #Tmax[0] is maximum parameter size, Tmax[1] maximum inftime (timeit),Tmax[2] maximum number of entangling gates
+    #optim_options = kwargs['optimopt']
     num_train = len(Y_train)
     validation_size = 3 * batch_size
-    opt = qml.AdamOptimizer(learning_rate)
+    opt = optim(stepsize=learning_rate) #all optimizers in autograd module take in argument stepsize, so this works for all
     start = time.time()
     for _ in range(kwargs['nsteps']):
         batch_index = np.random.randint(0, num_train, (batch_size,))
@@ -93,10 +96,14 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, batch_size, learni
         err_rate = cost
         inftime = cost_time
     # QHACK #
-    W_ = np.abs((100. - len(var)) / (100.)) * np.abs((100. - inftime) / (100.)) * (1. / err_rate)
+
+    W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[1] - inftime) / (Tmax[1])) * (1. / err_rate)
+
+    if inf_time=='numcnots':
+        
     return W_,var
 
-def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
+def evaluate_w(circuit, n_params,numcnots, X_train, Y_train, **kwargs):
     """
     together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
     batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists
@@ -108,7 +115,7 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     learning_rates=kwargs.get('learning_rates')
     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
     for idx, sdx in hyperparameter_space:
-        wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, batch_size=idx, learning_rate=sdx, **kwargs)
+        wtemp, weights = train_circuit(circuit, n_params,numcnots, X_train, Y_train, batch_size=idx, learning_rate=sdx, **kwargs)
         if wtemp >= Wmax:
             Wmax = wtemp
             saved_weights = weights

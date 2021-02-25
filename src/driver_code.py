@@ -30,7 +30,9 @@ if __name__ == "__main__":
               'n_samples': 1500,
               'learning_rates': [0.01],
               'save_frequency': 1,
-              'save_path': data_path
+              'save_path': data_path,
+              'Tmax': [100,100,100],
+              'rate_type': 'accuracy'
               }
 
     # Save the configuration file so that we can remember what we did

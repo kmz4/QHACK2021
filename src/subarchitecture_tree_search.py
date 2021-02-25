@@ -110,8 +110,9 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
 
     # Return the shape of the parameters so we can initialize them correctly later on.
     params_shape = (nqubits, len(architecture))
+    numcnots = architecture.count('ZZ')*2*nqubits #count the number of cnots
     # create and return a QNode
-    return qml.QNode(circuit_from_architecture, dev), params_shape
+    return qml.QNode(circuit_from_architecture, dev), params_shape, numcnots #give back the number of cnots
 
 
 def run_tree_architecture_search(config: dict):
@@ -208,16 +209,16 @@ def run_tree_architecture_search(config: dict):
                 for v in leaves_at_depth_d[d]:
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
-                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                    circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
-                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        w_cost,weights = evaluate_w(circuit, pshape, numcnots,X_train, y_train_ohe, rate_type='accuracy', **config)
                         end=time.time()
                         clock_time=end-start
                         attrs = {"W": w_cost, "weights": weights,"timing":clock_time}
                     else:
-                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        w_cost,weights = evaluate_w(circuit, pshape,numcnots, X_train, y_train_ohe, rate_type='accuracy', **config)
                         attrs = {"W": w_cost, "weights": weights.numpy()}
                     # Add the w_cost to the node so we can use it later for pruning
                     #nx.set_node_attributes(G, {v: w_cost}, 'W')
@@ -241,16 +242,16 @@ def run_tree_architecture_search(config: dict):
                 for v in leaves_at_depth_d[d]:
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
-                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                    circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
-                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        w_cost,weights = evaluate_w(circuit, pshape,numcnots, X_train, y_train_ohe, rate_type='accuracy', **config)
                         end=time.time()
                         clock_time=end-start
                         attrs = {"W": w_cost, "weights": weights.numpy(),"timing":clock_time}
                     else:
-                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        w_cost,weights = evaluate_w(circuit, pshape,numcnots, X_train, y_train_ohe, rate_type='accuracy', **config)
                         attrs = {"W": w_cost, "weights": weights.numpy()}
                     # Add the w_cost to the node so we can use it later for pruning
                     #nx.set_node_attributes(G, attrs)
@@ -265,16 +266,16 @@ def run_tree_architecture_search(config: dict):
                 for v in leaves_at_depth_d[d]:
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
-                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
+                    circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
-                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        w_cost,weights = evaluate_w(circuit, pshape, numcnots,X_train, y_train_ohe, rate_type='accuracy', **config)
                         end=time.time()
                         clock_time=end-start
                         attrs = {"W": w_cost, "weights": weights.numpy(),"timing":clock_time}
                     else:
-                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, rate_type='accuracy', **config)
+                        w_cost,weights = evaluate_w(circuit, pshape, numcnots,X_train, y_train_ohe, rate_type='accuracy', **config)
                         attrs = {"W": w_cost, "weights": weights.numpy()}
                     # Add the w_cost to the node so we can use it later for pruning
                     #nx.set_node_attributes(G, {v: w_cost}, 'W')
