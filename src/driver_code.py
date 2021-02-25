@@ -30,7 +30,8 @@ if __name__ == "__main__":
               'n_samples': 1500,
               'learning_rates': [0.01],
               'save_frequency': 1,
-              'save_path': data_path
+              'save_path': data_path,
+              'circuit_type':'schuld'
               }
 
     # Save the configuration file so that we can remember what we did

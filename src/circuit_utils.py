@@ -1,6 +1,17 @@
 import pennylane as qml
 from pennylane import numpy as np
 
+def cycle_CNOT_layer(wires):
+    nq = len(wires)
+    for n in range(nq-1):
+        CNOT(wires=[n,n+1])
+    CNOT(wires=[nq-1,0])
+
+def path_CNOT_layer(wires):
+    nq = len(wires)
+    for n in range(nq-1):
+        CNOT(wires=[n,n+1])
+
 def zz_layer(wires, params):
     nq = len(wires)
     for n in range(nq - 1):
@@ -31,11 +42,11 @@ def embedding_1(X, wires):
         large_features = np.tile(X,r_)
         qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation='Y') # replace with more general embedding
     else:
-        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation='Y') # replace with more general embedding        
+        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation='Y') # replace with more general embedding
     qml.templates.embeddings.AngleEmbedding(X, wires=wires)
 
 
 # TODO: ADD W-COST HERE
 
-string_to_layer_mapping = {'ZZ': zz_layer, 'X': x_layer, 'Y': y_layer}
+string_to_layer_mapping = {'ZZ': zz_layer, 'X': x_layer, 'Y': y_layer,'hw_CNOT':path_CNOT_layer}
 string_to_embedding_mapping = {'E1': embedding_1}

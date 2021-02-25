@@ -135,6 +135,9 @@ def run_tree_architecture_search(config: dict):
         - save_path: String. Location to store the data.
 
     """
+    # build in:  circuit type
+    # if circuit_type=='schuld' use controlled rotation gates and cycle layout for entangling layers
+    # if circuit_type=='hardware' use minimal gate set and path layout for entangling layers
     # Parse configuration parameters.
     NQUBITS = config['nqubits']
     NSAMPLES = config['n_samples']
@@ -174,7 +177,10 @@ def run_tree_architecture_search(config: dict):
     G.nodes['ROOT']["W"]=0.0
     #nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
     # Define allowed layers
-    possible_layers = ['ZZ', 'X', 'Y']
+    if circuit_type=='schuld':
+        possible_layers = ['ZZ', 'X', 'Y']
+    if circuit_type=='hardware':
+        possible_layers = ['hw_CNOT','X','Y']
     possible_embeddings = ['E1', ]
     assert all([l in string_to_layer_mapping.keys() for l in possible_layers]), 'No valid mapping from string to function found'
     assert all([l in string_to_embedding_mapping.keys() for l in possible_embeddings]), 'No valid mapping from string to function found'
