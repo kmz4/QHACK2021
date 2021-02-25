@@ -67,7 +67,7 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         predictions = [2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1. for x in ang_array]
         return mse(actual, predictions)
 
-    if kwargs['readout_layer']=='one-hot':
+    if kwargs['readout_layer']=='one_hot':
         var = np.zeros(parameter_shape)
     elif kwargs['readout_layer']=="weighted_neuron":
         var = np.hstack((np.zeros(parameter_shape),np.random.randn(kwargs['nqubits'])))
@@ -83,7 +83,7 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         batch_index = np.random.randint(0, num_train, (batch_size,))
         X_train_batch = X_train[batch_index]
         Y_train_batch = Y_train[batch_index]
-        if kwargs['readout_layer']=='one-hot':
+        if kwargs['readout_layer']=='one_hot':
             var, cost = opt.step_and_cost(lambda v: ohe_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
         elif kwargs['readout_layer']=='weighted_neuron':
             var, cost = opt.step_and_cost(lambda v: wn_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
@@ -95,7 +95,7 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         X_validation_batch = X_train[validation_batch]
         Y_validation_batch = Y_train[validation_batch]
         start = time.time()  # add in timeit function from Wbranch
-        if kwargs['readout_layer']=='one-hot':
+        if kwargs['readout_layer']=='one_hot':
             predictions = np.stack([circuit(var, x) for x in X_validation_batch])
         elif kwargs['readout_layer']=='weighted_neuron':
             n = kwargs.get('nqubits')

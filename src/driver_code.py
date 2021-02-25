@@ -37,7 +37,7 @@ if __name__ == "__main__":
               'inf_time':'timeit',
               'fill':'redundant', # or 'pad'
               'rate_type': 'accuracy', # or 'batch_cost'
-              'readout_layer': 'one-hot',  #or 'weighted_neuron'
+              'readout_layer': 'one_hot',  #or 'weighted_neuron'
               }
 
     # Save the configuration file so that we can remember what we did
