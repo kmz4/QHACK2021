@@ -48,12 +48,28 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
 
         kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
 
-        nsteps (int) : Number of training steps.
+            nsteps (int) : Number of training steps.
 
-        optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
-                Pass as qml.OptimizerName .
+            optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
+                Pass as qml.OptimizerName.
+
+            Tmax (list): Maximum point T as defined in https://arxiv.org/abs/2010.08512. (Definition 8)
+                    The first element is the maximum number of parameters among all architectures,
+                    the second is the maximum inference time among all architectures in terms of computing time,
+                    the third one is the maximum inference time among all architectures in terms of the number of CNOTS
+                    in the circuit
         
-        
+            rate_type (string): Determines the type of error rate in the W-coefficient.
+                    If rate_type == 'accuracy', the inference time of the circuit
+                    is equal to the time it takes to evaluate the accuracy of the trained circuit with
+                    respect to a validation batch three times the size of the training batch size and 
+                    the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
+
+                    If rate_type == 'accuracy', the inference time of the circuit is equal to the time
+                    it takes to train the circuit (for nsteps training steps) and compute the cost at
+                    each step and the error rate is equal to the cost after nsteps training steps.
+
+            
 
 
  
