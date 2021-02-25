@@ -31,7 +31,7 @@ def mse(labels, predictions):
     return loss / labels.shape[0]
 
 
-def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accuracy', **kwargs):
+def train_circuit(circuit, parameter_shape, X_train, Y_train, batch_size, learning_rate,**kwargs):
     """
     train a circuit classifier
     Args:
@@ -65,10 +65,8 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, rate_type='accurac
     var = 0.01*np.ones(*parameter_shape)
     batch_size = kwargs['batch_size']
     num_train = len(Y_train)
-    validation_size = 3 * kwargs['batch_size']
-    #opt = kwargs['opt']
-    #opt=opt(kwargs['learning_rate'])
-    opt = qml.AdamOptimizer(kwargs['learning_rate'])
+    validation_size = 3 * batch_size
+    opt = qml.AdamOptimizer(learning_rate)
     start = time.time()
     for _ in range(kwargs['nsteps']):
         batch_index = np.random.randint(0, num_train, (batch_size,))
@@ -101,13 +99,13 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists
     """
     Wmax = 0.0
-    s = kwargs.get('nsteps', None)
-    rate_type = kwargs.get('rate_type', None)
-    batch_sets = kwargs.get('batch_size')
-    learning_rates=kwargs.get('learning_rate')
+    # s = kwargs.get('nsteps', None)
+    # rate_type = kwargs.get('rate_type', None)
+    batch_sets = kwargs.get('batch_sizes')
+    learning_rates=kwargs.get('learning_rates')
     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
     for idx, sdx in hyperparameter_space:
-        wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, nsteps=s, batch_size=idx, rate_type=rate_type, learning_rate=sdx)
+        wtemp, weights = train_circuit(circuit, n_params, X_train, Y_train, batch_size=idx, learning_rate=sdx, **kwargs)
         if wtemp >= Wmax:
             Wmax = wtemp
             saved_weights = weights
