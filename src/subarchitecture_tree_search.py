@@ -166,7 +166,7 @@ def run_tree_architecture_search(config: dict):
     # rescale data to -1 1
     X_train = np.multiply(1.0, np.subtract(np.multiply(np.divide(np.subtract(X_train, X_train.min()),
                                                                  (X_train.max() - X_train.min())), 2.0), 1.0))
-    if config['readout_layer']=='one-hot':
+    if config['readout_layer']=='one_hot':
         # one hot encode labels
         y_train_ohe = np.zeros((y_train.size, y_train.max() + 1))
         y_train_ohe[np.arange(y_train.size), y_train] = 1
