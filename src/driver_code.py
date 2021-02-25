@@ -18,27 +18,26 @@ if __name__ == "__main__":
 
     # Create a configuration file for the tree prune algorithm
     config = {'nqubits': 3,
-              'min_tree_depth': 3,
-              'max_tree_depth': 8,
-              'prune_rate': 0.3,
+              'min_tree_depth': 4,
+              'max_tree_depth': 5,
+              'prune_rate': 0.15,
               'prune_step': 3,
               'plot_trees': False,
               'data_set': 'moons',
               'nsteps': 5,
               'optim': qml.AdamOptimizer,
-              'batch_sizes': [25],
+              'batch_sizes': [8,16,32,64],
               'n_samples': 1500,
-              'learning_rates': [0.01],
+              'learning_rates': [0.001,0.005,0.01],
               'save_frequency': 1,
               'save_path': data_path,
-<<<<<<< HEAD
+              'save_timing': True,
               'circuit_type':'schuld',
+              'Tmax': [100,100,100],
+              'inf_time':'timeit',
               'fill':'redundant', # or 'pad'
               'rate_type': 'accuracy', # or 'batch_cost'
               'readout_layer': 'one-hot',  #or 'weighted_neuron'
-=======
-              'circuit_type':'schuld'
->>>>>>> build in functionality to switch between architecture classes
               }
 
     # Save the configuration file so that we can remember what we did
