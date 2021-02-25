@@ -62,21 +62,21 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         '''
         from autograd.numpy import exp
         n = kwargs.get('nqubits')
-        w = params[-n:]
-        theta = params[:-n]
+        w = params[:,-1]
+        theta = params[:,:-1]
         predictions = [2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1. for x in ang_array]
         return mse(actual, predictions)
 
     if kwargs['readout_layer']=='one_hot':
         var = np.zeros(parameter_shape)
     elif kwargs['readout_layer']=="weighted_neuron":
-        var = np.hstack((np.zeros(parameter_shape),np.random.randn(kwargs['nqubits'])))
+        var = np.hstack((np.zeros(parameter_shape),np.random.random((kwargs['nqubits'],1))-0.5))
     rate_type = kwargs['rate_type']
     inf_time = kwargs['inf_time']
-     
+
     optim = kwargs['optim']
     numcnots = kwargs['numcnots']
-     
+
     Tmax = kwargs['Tmax'] #Tmax[0] is maximum parameter size, Tmax[1] maximum inftime (timeit),Tmax[2] maximum number of entangling gates
     num_train = len(Y_train)
     validation_size = 3 * batch_size
