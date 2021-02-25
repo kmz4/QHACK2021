@@ -31,7 +31,9 @@ if __name__ == "__main__":
               'learning_rates': [0.01],
               'save_frequency': 1,
               'save_path': data_path,
-              'circuit_type':'schuld'
+              'circuit_type':'schuld',
+              'fill':'redundant',
+              'rate_type': 'accuracy',
               }
 
     # Save the configuration file so that we can remember what we did
