@@ -99,8 +99,8 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
             predictions = np.stack([circuit(var, x) for x in X_validation_batch])
         elif kwargs['readout_layer']=='weighted_neuron':
             n = kwargs.get('nqubits')
-            w = params[-n:]
-            theta = params[:-n]
+            w = var[-n:]
+            theta = var[:-n]
             prediction = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1.,0)) for x in X_validation_batch]
         end = time.time()
         inftime = (end - start) / len(X_validation_batch)
@@ -110,11 +110,11 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         inftime = cost_time
     # QHACK #
 
-    if inf_time =='timeit':
+    if kwargs['inf_time'] =='timeit':
 
         W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[1] - inftime) / (Tmax[1])) * (1. / err_rate)
 
-    elif inf_time=='numcnots':
+    elif kwargs['inf_time']=='numcnots':
         nc_ = kwargs.get('numcnots',0)
         W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[2] - nc_) / (Tmax[2])) * (1. / err_rate)
 
