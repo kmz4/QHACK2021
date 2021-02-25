@@ -136,6 +136,9 @@ def run_tree_architecture_search(config: dict):
         - save_path: String. Location to store the data.
 
     """
+    # build in:  circuit type
+    # if circuit_type=='schuld' use controlled rotation gates and cycle layout for entangling layers
+    # if circuit_type=='hardware' use minimal gate set and path layout for entangling layers
     # Parse configuration parameters.
     NQUBITS = config['nqubits']
     NSAMPLES = config['n_samples']
@@ -175,7 +178,11 @@ def run_tree_architecture_search(config: dict):
     G.nodes['ROOT']["W"]=0.0
     #nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
     # Define allowed layers
-    possible_layers = ['ZZ', 'X', 'Y']
+    ct_ = config.get('circuit_type',None)
+    if ct_=='schuld':
+        possible_layers = ['ZZ', 'X', 'Y','Z']
+    if ct_=='hardware':
+        possible_layers = ['hw_CNOT','X','Y','Z']
     possible_embeddings = ['E1', ]
     assert all([l in string_to_layer_mapping.keys() for l in possible_layers]), 'No valid mapping from string to function found'
     assert all([l in string_to_embedding_mapping.keys() for l in possible_embeddings]), 'No valid mapping from string to function found'
@@ -213,13 +220,13 @@ def run_tree_architecture_search(config: dict):
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
-                        w_cost,weights = evaluate_w(circuit, pshape, numcnots,X_train, y_train_ohe,  **config)
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
                         end=time.time()
                         clock_time=end-start
                         attrs = {"W": w_cost, "weights": weights,"timing":clock_time}
                     else:
-                        w_cost,weights = evaluate_w(circuit, pshape,numcnots, X_train, y_train_ohe, **config)
-                        attrs = {"W": w_cost, "weights": weights.numpy()}
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
+                        attrs = {"W": w_cost, "weights": weights.numpy(),'num_cnots':None}
                     # Add the w_cost to the node so we can use it later for pruning
                     #nx.set_node_attributes(G, {v: w_cost}, 'W')
                     #nx.set_node_attributes(G, {v: w_cost}, 'W')
@@ -246,13 +253,13 @@ def run_tree_architecture_search(config: dict):
                     # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
-                        w_cost,weights = evaluate_w(circuit, pshape,numcnots, X_train, y_train_ohe, **config)
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
                         end=time.time()
                         clock_time=end-start
                         attrs = {"W": w_cost, "weights": weights.numpy(),"timing":clock_time}
                     else:
-                        w_cost,weights = evaluate_w(circuit, pshape,numcnots, X_train, y_train_ohe,  **config)
-                        attrs = {"W": w_cost, "weights": weights.numpy()}
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
+                        attrs = {"W": w_cost, "weights": weights.numpy(),'num_cnots':None}
                     # Add the w_cost to the node so we can use it later for pruning
                     #nx.set_node_attributes(G, attrs)
                     for kdx in attrs.keys():
@@ -270,12 +277,12 @@ def run_tree_architecture_search(config: dict):
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
                         start=time.time()
-                        w_cost,weights = evaluate_w(circuit, pshape, numcnots,X_train, y_train_ohe, **config)
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
                         end=time.time()
                         clock_time=end-start
                         attrs = {"W": w_cost, "weights": weights.numpy(),"timing":clock_time}
                     else:
-                        w_cost,weights = evaluate_w(circuit, pshape, numcnots,X_train, y_train_ohe,  **config)
+                        w_cost,weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
                         attrs = {"W": w_cost, "weights": weights.numpy()}
                     # Add the w_cost to the node so we can use it later for pruning
                     #nx.set_node_attributes(G, {v: w_cost}, 'W')

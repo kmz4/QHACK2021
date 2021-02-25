@@ -31,8 +31,10 @@ if __name__ == "__main__":
               'learning_rates': [0.01],
               'save_frequency': 1,
               'save_path': data_path,
-              'Tmax': [100,100,100],
+              'circuit_type':'schuld',
+              'fill':'redundant',
               'rate_type': 'accuracy',
+              'Tmax': [100,100,100],
               'inf_time':'timeit'
               }
 

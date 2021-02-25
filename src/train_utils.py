@@ -61,16 +61,13 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
         predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
         return mse(actual, predictions)
     
- 
-    #var = np.random.randn(*parameter_shape)
-    var = 0.01*np.ones(parameter_shape)
- 
-    #batch_size = kwargs['batch_size']  
+
+    var = 0.01*np.ones(tuple([*parameter_shape]))
+
     rate_type = kwargs['rate_type']
     inf_time = kwargs['inf_time']
     optim = kwargs['optim']
     Tmax = kwargs['Tmax'] #Tmax[0] is maximum parameter size, Tmax[1] maximum inftime (timeit),Tmax[2] maximum number of entangling gates
-    #optim_options = kwargs['optimopt']
     num_train = len(Y_train)
     validation_size = 3 * batch_size
     opt = optim(stepsize=learning_rate) #all optimizers in autograd module take in argument stepsize, so this works for all
@@ -80,11 +77,10 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
         X_train_batch = X_train[batch_index]
         Y_train_batch = Y_train[batch_index]
         var, cost = opt.step_and_cost(lambda v: cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
-        #print(cost)
     end = time.time()
     cost_time = (end - start)
 
-    if rate_type == 'accuracy':
+    if kwargs['rate_type'] == 'accuracy':
         validation_batch = np.random.randint(0, num_train, (validation_size,))
         X_validation_batch = X_train[validation_batch]
         Y_validation_batch = Y_train[validation_batch]
@@ -93,7 +89,7 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
         end = time.time()
         inftime = (end - start) / len(X_validation_batch)
         err_rate = 1.0 - accuracy(predictions, Y_validation_batch)+10**-7 #add small epsilon to prevent divide by 0 errors
-    elif rate_type == 'batch_cost':
+    elif kwargs['rate_type'] == 'batch_cost':
         err_rate = cost
         inftime = cost_time
     # QHACK #
@@ -108,19 +104,17 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
         
     return W_,var
 
-def evaluate_w(circuit, n_params,numcnots, X_train, Y_train, **kwargs):
+def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     """
     together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
     batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists
     """
     Wmax = 0.0
-    # s = kwargs.get('nsteps', None)
-    # rate_type = kwargs.get('rate_type', None)
     batch_sets = kwargs.get('batch_sizes')
     learning_rates=kwargs.get('learning_rates')
     hyperparameter_space = list(itertools.product(batch_sets, learning_rates))
     for idx, sdx in hyperparameter_space:
-        wtemp, weights = train_circuit(circuit, n_params,numcnots, X_train, Y_train, batch_size=idx, learning_rate=sdx, **kwargs)
+        wtemp, weights = train_circuit(circuit, n_params,X_train, Y_train, batch_size=idx, learning_rate=sdx, **kwargs)
         if wtemp >= Wmax:
             Wmax = wtemp
             saved_weights = weights
