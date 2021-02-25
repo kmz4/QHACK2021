@@ -60,10 +60,13 @@ def train_circuit(circuit, parameter_shape, X_train, Y_train, batch_size, learni
 
         predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
         return mse(actual, predictions)
-
+    
+ 
     #var = np.random.randn(*parameter_shape)
-    var = 0.01*np.ones(*parameter_shape)
-    batch_size = kwargs['batch_size']
+    var = 0.01*np.ones(parameter_shape)
+ 
+    #batch_size = kwargs['batch_size']  
+    rate_type = kwargs['rate_type']
     num_train = len(Y_train)
     validation_size = 3 * batch_size
     opt = qml.AdamOptimizer(learning_rate)
