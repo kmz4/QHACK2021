@@ -104,7 +104,10 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
         string_to_embedding_mapping[embedding_circuit](features, dev.wires)
         # for each layer, lookup the function in the layer dict, call with parameters being passed.
         for d, component in enumerate(architecture):
-            string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
+            if component=='hw_CNOT':
+                string_to_layer_mapping[component](list(range(nqubits)))
+            else:
+                string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
         # return an expectation value for each class so we can compare with one hot encoded labels.
         return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
 
