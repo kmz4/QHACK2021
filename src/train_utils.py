@@ -67,6 +67,7 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
  
     #batch_size = kwargs['batch_size']  
     rate_type = kwargs['rate_type']
+    inf_time = kwargs['inf_time']
     optim = kwargs['optim']
     Tmax = kwargs['Tmax'] #Tmax[0] is maximum parameter size, Tmax[1] maximum inftime (timeit),Tmax[2] maximum number of entangling gates
     #optim_options = kwargs['optimopt']
@@ -97,9 +98,13 @@ def train_circuit(circuit, parameter_shape, numcnots,X_train, Y_train, batch_siz
         inftime = cost_time
     # QHACK #
 
-    W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[1] - inftime) / (Tmax[1])) * (1. / err_rate)
+    if inf_time =='timeit':
 
-    if inf_time=='numcnots':
+        W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[1] - inftime) / (Tmax[1])) * (1. / err_rate)
+
+    elif inf_time=='numcnots':
+
+        W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[2] - numcnots) / (Tmax[2])) * (1. / err_rate)
         
     return W_,var
 

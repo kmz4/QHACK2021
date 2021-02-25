@@ -32,7 +32,8 @@ if __name__ == "__main__":
               'save_frequency': 1,
               'save_path': data_path,
               'Tmax': [100,100,100],
-              'rate_type': 'accuracy'
+              'rate_type': 'accuracy',
+              'inf_time':'timeit'
               }
 
     # Save the configuration file so that we can remember what we did
