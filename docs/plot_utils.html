@@ -32,6 +32,15 @@ import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 
 def plot_tree(G, **kwargs):
+    &#34;&#34;&#34;
+
+    Args:
+      G: 
+      **kwargs: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     labels = kwargs.pop(&#39;labels&#39;, True)
     fig, axs = plt.subplots(1, 1)
     fig.set_size_inches(16, 8)
@@ -63,12 +72,28 @@ def plot_tree(G, **kwargs):
 <span>def <span class="ident">plot_tree</span></span>(<span>G, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>G</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def plot_tree(G, **kwargs):
+    &#34;&#34;&#34;
+
+    Args:
+      G: 
+      **kwargs: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     labels = kwargs.pop(&#39;labels&#39;, True)
     fig, axs = plt.subplots(1, 1)
     fig.set_size_inches(16, 8)

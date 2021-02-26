@@ -28,19 +28,48 @@
 </summary>
 <pre><code class="python">import pennylane as qml
 from pennylane import numpy as np
+from qose.featuremaps import *
+
 
 def cycle_CNOT_layer(wires):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nq = len(wires)
-    for n in range(nq-1):
-        qml.CNOT(wires=[n,n+1])
-    qml.CNOT(wires=[nq-1,0])
+    for n in range(nq - 1):
+        qml.CNOT(wires=[n, n + 1])
+    qml.CNOT(wires=[nq - 1, 0])
+
 
 def path_CNOT_layer(wires):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nq = len(wires)
-    for n in range(nq-1):
-        qml.CNOT(wires=[n,n+1])
+    for n in range(nq - 1):
+        qml.CNOT(wires=[n, n + 1])
+
 
 def zz_layer(wires, params):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nq = len(wires)
     for n in range(nq - 1):
         zz_gate([n, n + 1], params[n])
@@ -48,49 +77,116 @@ def zz_layer(wires, params):
 
 
 def zz_gate(wires, gamma):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      gamma: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     qml.CNOT(wires=wires)
     qml.RZ(gamma, wires=wires[1])
     qml.CNOT(wires=wires)
 
 
 def x_layer(wires, params):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RX(params[n], wires=[n, ])
 
+
 def z_layer(wires, params):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RZ(params[n], wires=[n, ])
 
+
 def y_layer(wires, params):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RY(params[n], wires=[n, ])
 
-def embedding_1(X, wires,fill=&#39;redundant&#39;):
-    if len(X)&lt;len(wires):
-        r_ = len(wires)//len(X)
-        if fill==&#39;redundant&#39;:
-            large_features = np.tile(X,r_)
-        elif fill==&#39;pad&#39;:
-            large_features = np.pad(X,(0,len(wires)),&#39;constant&#39;,constant_values=0)
-        qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation=&#39;Y&#39;) # replace with more general embedding
+
+def embedding_1(X, wires, fill=&#39;redundant&#39;):
+    &#34;&#34;&#34;
+
+    Args:
+      X: 
+      wires: 
+      fill:  (Default value = &#39;redundant&#39;)
+
+    Returns:
+
+    &#34;&#34;&#34;
+    if len(X) &lt; len(wires):
+        r_ = len(wires) // len(X)
+        if fill == &#39;redundant&#39;:
+            large_features = np.tile(X, r_)
+        elif fill == &#39;pad&#39;:
+            large_features = np.pad(X, (0, len(wires)), &#39;constant&#39;, constant_values=0)
+        qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation=&#39;Y&#39;)
     else:
-        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation=&#39;Y&#39;) # replace with more general embedding
-    qml.templates.embeddings.AngleEmbedding(X, wires=wires)
+        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation=&#39;Y&#39;)
 
 
+def embedding_2(X, wires):
+    &#34;&#34;&#34;
+
+    Args:
+      X: 
+      wires: 
+
+    Returns:
+
+    &#34;&#34;&#34;
+    qml.templates.embeddings.AmplitudeEmbedding(X, wires=wires, pad=0, normalize=True)
 
 def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device, config: dict):
-    &#34;&#34;&#34;
-    Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
+    &#34;&#34;&#34;Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
 
-    :param leaf: String that corresponds to a leaf in the tree.
-    :param nqubits: The number of qubits in the circuit.
-    :param nclasses:  The number of classes in the circuit.
-    :param dev: PennyLane Device.
-    :return: QNode corresponding to the circuit.
+    Args:
+      leaf: String that corresponds to a leaf in the tree.
+      nqubits: The number of qubits in the circuit.
+      nclasses: The number of classes in the circuit.
+      dev: PennyLane Device.
+      leaf: str: 
+      nqubits: int: 
+      nclasses: int: 
+      dev: qml.Device: 
+      config: dict: 
+
+    Returns:
+      QNode corresponding to the circuit.
+
     &#34;&#34;&#34;
     architecture = leaf.split(&#39;:&#39;)
 
@@ -98,6 +194,15 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
     embedding_circuit = architecture.pop(0)
 
     def circuit_from_architecture(params, features):
+        &#34;&#34;&#34;
+
+        Args:
+          params: 
+          features: 
+
+        Returns:
+
+        &#34;&#34;&#34;
         # lookup the function in the embedding dict, call with features being passed.
         string_to_embedding_mapping[embedding_circuit](features, dev.wires)
         # for each layer, lookup the function in the layer dict, call with parameters being passed.
@@ -107,10 +212,7 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
             else:
                 string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
         # return an expectation value for each class so we can compare with one hot encoded labels.
-        if nqubits &gt; nclasses:
-            return [qml.expval(qml.PauliZ(nc)) for nc in range(nqubits)]
-        else:
-            return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
+        return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
 
     # Return the shape of the parameters so we can initialize them correctly later on.
     if config[&#39;circuit_type&#39;] == &#39;schuld&#39;:
@@ -124,10 +226,11 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
     # create and return a QNode
     return qml.QNode(circuit_from_architecture, dev), params_shape, numcnots  # give back the number of cnots
 
-string_to_layer_mapping = {&#39;ZZ&#39;: zz_layer,\
-                        &#39;X&#39;: x_layer, &#39;Y&#39;: y_layer,&#39;Z&#39;:z_layer,\
-                        &#39;hw_CNOT&#39;:path_CNOT_layer}
-string_to_embedding_mapping = {&#39;E1&#39;: embedding_1}</code></pre>
+string_to_layer_mapping = {&#39;ZZ&#39;: zz_layer, \
+                           &#39;X&#39;: x_layer, &#39;Y&#39;: y_layer, &#39;Z&#39;: z_layer, \
+                           &#39;hw_CNOT&#39;: path_CNOT_layer}
+string_to_embedding_mapping = {&#39;E1&#39;: embedding_1, &#39;E2&#39;: embedding_2, &#39;E3&#39;: qaoa, &#39;E4&#39;: XXZ, &#39;E5&#39;: aspuru,
+                               &#39;E6&#39;: random_embed}</code></pre>
 </details>
 </section>
 <section>
@@ -142,25 +245,50 @@ string_to_embedding_mapping = {&#39;E1&#39;: embedding_1}</code></pre>
 </code></dt>
 <dd>
 <div class="desc"><p>Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.</p>
-<p>:param leaf: String that corresponds to a leaf in the tree.
-:param nqubits: The number of qubits in the circuit.
-:param nclasses:
-The number of classes in the circuit.
-:param dev: PennyLane Device.
-:return: QNode corresponding to the circuit.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>leaf</code></strong></dt>
+<dd>String that corresponds to a leaf in the tree.</dd>
+<dt><strong><code>nqubits</code></strong></dt>
+<dd>The number of qubits in the circuit.</dd>
+<dt><strong><code>nclasses</code></strong></dt>
+<dd>The number of classes in the circuit.</dd>
+<dt><strong><code>dev</code></strong></dt>
+<dd>PennyLane Device.</dd>
+<dt><strong><code>leaf</code></strong></dt>
+<dd>str: </dd>
+<dt><strong><code>nqubits</code></strong></dt>
+<dd>int: </dd>
+<dt><strong><code>nclasses</code></strong></dt>
+<dd>int: </dd>
+<dt><strong><code>dev</code></strong></dt>
+<dd>qml.Device: </dd>
+<dt><strong><code>config</code></strong></dt>
+<dd>dict: </dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>QNode corresponding to the circuit.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device, config: dict):
-    &#34;&#34;&#34;
-    Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
+    &#34;&#34;&#34;Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
 
-    :param leaf: String that corresponds to a leaf in the tree.
-    :param nqubits: The number of qubits in the circuit.
-    :param nclasses:  The number of classes in the circuit.
-    :param dev: PennyLane Device.
-    :return: QNode corresponding to the circuit.
+    Args:
+      leaf: String that corresponds to a leaf in the tree.
+      nqubits: The number of qubits in the circuit.
+      nclasses: The number of classes in the circuit.
+      dev: PennyLane Device.
+      leaf: str: 
+      nqubits: int: 
+      nclasses: int: 
+      dev: qml.Device: 
+      config: dict: 
+
+    Returns:
+      QNode corresponding to the circuit.
+
     &#34;&#34;&#34;
     architecture = leaf.split(&#39;:&#39;)
 
@@ -168,6 +296,15 @@ The number of classes in the circuit.
     embedding_circuit = architecture.pop(0)
 
     def circuit_from_architecture(params, features):
+        &#34;&#34;&#34;
+
+        Args:
+          params: 
+          features: 
+
+        Returns:
+
+        &#34;&#34;&#34;
         # lookup the function in the embedding dict, call with features being passed.
         string_to_embedding_mapping[embedding_circuit](features, dev.wires)
         # for each layer, lookup the function in the layer dict, call with parameters being passed.
@@ -177,10 +314,7 @@ The number of classes in the circuit.
             else:
                 string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
         # return an expectation value for each class so we can compare with one hot encoded labels.
-        if nqubits &gt; nclasses:
-            return [qml.expval(qml.PauliZ(nc)) for nc in range(nqubits)]
-        else:
-            return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
+        return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
 
     # Return the shape of the parameters so we can initialize them correctly later on.
     if config[&#39;circuit_type&#39;] == &#39;schuld&#39;:
@@ -199,65 +333,154 @@ The number of classes in the circuit.
 <span>def <span class="ident">cycle_CNOT_layer</span></span>(<span>wires)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>wires</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def cycle_CNOT_layer(wires):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nq = len(wires)
-    for n in range(nq-1):
-        qml.CNOT(wires=[n,n+1])
-    qml.CNOT(wires=[nq-1,0])</code></pre>
+    for n in range(nq - 1):
+        qml.CNOT(wires=[n, n + 1])
+    qml.CNOT(wires=[nq - 1, 0])</code></pre>
 </details>
 </dd>
 <dt id="qose.circuit_utils.embedding_1"><code class="name flex">
 <span>def <span class="ident">embedding_1</span></span>(<span>X, wires, fill='redundant')</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>wires</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>fill</code></strong></dt>
+<dd>(Default value = 'redundant')</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def embedding_1(X, wires,fill=&#39;redundant&#39;):
-    if len(X)&lt;len(wires):
-        r_ = len(wires)//len(X)
-        if fill==&#39;redundant&#39;:
-            large_features = np.tile(X,r_)
-        elif fill==&#39;pad&#39;:
-            large_features = np.pad(X,(0,len(wires)),&#39;constant&#39;,constant_values=0)
-        qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation=&#39;Y&#39;) # replace with more general embedding
+<pre><code class="python">def embedding_1(X, wires, fill=&#39;redundant&#39;):
+    &#34;&#34;&#34;
+
+    Args:
+      X: 
+      wires: 
+      fill:  (Default value = &#39;redundant&#39;)
+
+    Returns:
+
+    &#34;&#34;&#34;
+    if len(X) &lt; len(wires):
+        r_ = len(wires) // len(X)
+        if fill == &#39;redundant&#39;:
+            large_features = np.tile(X, r_)
+        elif fill == &#39;pad&#39;:
+            large_features = np.pad(X, (0, len(wires)), &#39;constant&#39;, constant_values=0)
+        qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation=&#39;Y&#39;)
     else:
-        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation=&#39;Y&#39;) # replace with more general embedding
-    qml.templates.embeddings.AngleEmbedding(X, wires=wires)</code></pre>
+        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation=&#39;Y&#39;)</code></pre>
+</details>
+</dd>
+<dt id="qose.circuit_utils.embedding_2"><code class="name flex">
+<span>def <span class="ident">embedding_2</span></span>(<span>X, wires)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>wires</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def embedding_2(X, wires):
+    &#34;&#34;&#34;
+
+    Args:
+      X: 
+      wires: 
+
+    Returns:
+
+    &#34;&#34;&#34;
+    qml.templates.embeddings.AmplitudeEmbedding(X, wires=wires, pad=0, normalize=True)</code></pre>
 </details>
 </dd>
 <dt id="qose.circuit_utils.path_CNOT_layer"><code class="name flex">
 <span>def <span class="ident">path_CNOT_layer</span></span>(<span>wires)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>wires</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def path_CNOT_layer(wires):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nq = len(wires)
-    for n in range(nq-1):
-        qml.CNOT(wires=[n,n+1])</code></pre>
+    for n in range(nq - 1):
+        qml.CNOT(wires=[n, n + 1])</code></pre>
 </details>
 </dd>
 <dt id="qose.circuit_utils.x_layer"><code class="name flex">
 <span>def <span class="ident">x_layer</span></span>(<span>wires, params)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>wires</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>params</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def x_layer(wires, params):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RX(params[n], wires=[n, ])</code></pre>
@@ -267,12 +490,28 @@ The number of classes in the circuit.
 <span>def <span class="ident">y_layer</span></span>(<span>wires, params)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>wires</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>params</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def y_layer(wires, params):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RY(params[n], wires=[n, ])</code></pre>
@@ -282,12 +521,28 @@ The number of classes in the circuit.
 <span>def <span class="ident">z_layer</span></span>(<span>wires, params)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>wires</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>params</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def z_layer(wires, params):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RZ(params[n], wires=[n, ])</code></pre>
@@ -297,12 +552,28 @@ The number of classes in the circuit.
 <span>def <span class="ident">zz_gate</span></span>(<span>wires, gamma)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>wires</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>gamma</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def zz_gate(wires, gamma):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      gamma: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     qml.CNOT(wires=wires)
     qml.RZ(gamma, wires=wires[1])
     qml.CNOT(wires=wires)</code></pre>
@@ -312,12 +583,28 @@ The number of classes in the circuit.
 <span>def <span class="ident">zz_layer</span></span>(<span>wires, params)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>wires</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>params</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def zz_layer(wires, params):
+    &#34;&#34;&#34;
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     nq = len(wires)
     for n in range(nq - 1):
         zz_gate([n, n + 1], params[n])
@@ -345,6 +632,7 @@ The number of classes in the circuit.
 <li><code><a title="qose.circuit_utils.construct_circuit_from_leaf" href="#qose.circuit_utils.construct_circuit_from_leaf">construct_circuit_from_leaf</a></code></li>
 <li><code><a title="qose.circuit_utils.cycle_CNOT_layer" href="#qose.circuit_utils.cycle_CNOT_layer">cycle_CNOT_layer</a></code></li>
 <li><code><a title="qose.circuit_utils.embedding_1" href="#qose.circuit_utils.embedding_1">embedding_1</a></code></li>
+<li><code><a title="qose.circuit_utils.embedding_2" href="#qose.circuit_utils.embedding_2">embedding_2</a></code></li>
 <li><code><a title="qose.circuit_utils.path_CNOT_layer" href="#qose.circuit_utils.path_CNOT_layer">path_CNOT_layer</a></code></li>
 <li><code><a title="qose.circuit_utils.x_layer" href="#qose.circuit_utils.x_layer">x_layer</a></code></li>
 <li><code><a title="qose.circuit_utils.y_layer" href="#qose.circuit_utils.y_layer">y_layer</a></code></li>
