@@ -120,7 +120,7 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
     return qml.QNode(circuit_from_architecture, dev), params_shape, numcnots #give back the number of cnots
 
 
-def run_tree_architecture_search(config: dict):
+def run_tree_architecture_search(dev, config: dict):
     """
     The main workhorse for running the algorithm
 
@@ -227,6 +227,7 @@ def run_tree_architecture_search(config: dict):
                     #print(f'Training leaf {v}')
                     #print('current graph: ',list(G.nodes(data=True)))
                     circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
+
                     config['numcnots']=numcnots
                     #w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
                     if save_timing:
@@ -244,6 +245,7 @@ def run_tree_architecture_search(config: dict):
                     for kdx in attrs.keys():
                         G.nodes[v][kdx]=attrs[kdx]
                     #nx.set_node_attributes(G, attrs)
+                    print(circuit.draw())
 
         else:
             # Check that we are at the correct prune depth step.
@@ -276,6 +278,7 @@ def run_tree_architecture_search(config: dict):
                     #nx.set_node_attributes(G, attrs)
                     for kdx in attrs.keys():
                         G.nodes[v][kdx]=attrs[kdx]
+                    print(circuit.draw())
             else:
                 print('Grow Tree')
                 best_arch = max(nx.get_node_attributes(G,'W').items(), key=operator.itemgetter(1))[0]
@@ -303,6 +306,7 @@ def run_tree_architecture_search(config: dict):
                     #nx.set_node_attributes(G, attrs)
                     for kdx in attrs.keys():
                         G.nodes[v][kdx]=attrs[kdx]
+                    print(circuit.draw())
     best_arch = max(nx.get_node_attributes(G,'W').items(), key=operator.itemgetter(1))[0]
     print('architecture with max W: ',best_arch)
     print('max W:', G.nodes[best_arch]['W'])

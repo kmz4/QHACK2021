@@ -10,7 +10,7 @@ if __name__ == "__main__":
     with open(datapath + 'config.pickle', 'rb') as f:
         config = pickle.load(f)
 
-    restore_depth = 7
+    restore_depth = 6
 
     with open(datapath + f'tree_depth_{restore_depth}.pickle', 'rb') as f:
         G = pickle.load(f)
