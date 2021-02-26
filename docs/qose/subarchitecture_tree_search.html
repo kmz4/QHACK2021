@@ -299,7 +299,7 @@ def run_tree_architecture_search(config: dict):
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
                 # For every leaf, create a circuit and run the optimization.
                 for v in leaves_at_depth_d[d]:
-                    print(f&#39;Training leaf {v}&#39;)
+                    #print(f&#39;Training leaf {v}&#39;)
                     #print(&#39;current graph: &#39;,list(G.nodes(data=True)))
                     circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
                     config[&#39;numcnots&#39;]=numcnots
@@ -325,7 +325,7 @@ def run_tree_architecture_search(config: dict):
                 print(&#39;weights:&#39;,G.nodes[best_arch][&#39;weights&#39;])
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
                 for v in leaves_at_depth_d[d]:
-                    print(f&#39;Training leaf {v}&#39;)
+                    #print(f&#39;Training leaf {v}&#39;)
                     #print(&#39;current graph: &#39;,list(G.nodes(data=True)))
                     circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
                     config[&#39;numcnots&#39;]=numcnots
@@ -348,9 +348,7 @@ def run_tree_architecture_search(config: dict):
     best_arch = max(nx.get_node_attributes(G,&#39;W&#39;).items(), key=operator.itemgetter(1))[0]
     print(&#39;architecture with max W: &#39;,best_arch)
     print(&#39;max W:&#39;, G.nodes[best_arch][&#39;W&#39;])
-    print(&#39;weights: &#39;,G.nodes[best_arch][&#39;weights&#39;])
-    import pandas as pd
-    pd.DataFrame(nx.get_node_attributes(G,&#39;W&#39;),orient=&#39;index&#39;).to_csv(&#39;tree_weights.csv&#39;)</code></pre>
+    print(&#39;weights: &#39;,G.nodes[best_arch][&#39;weights&#39;])</code></pre>
 </details>
 </section>
 <section>
@@ -586,7 +584,7 @@ The number of classes in the circuit.
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
                 # For every leaf, create a circuit and run the optimization.
                 for v in leaves_at_depth_d[d]:
-                    print(f&#39;Training leaf {v}&#39;)
+                    #print(f&#39;Training leaf {v}&#39;)
                     #print(&#39;current graph: &#39;,list(G.nodes(data=True)))
                     circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
                     config[&#39;numcnots&#39;]=numcnots
@@ -612,7 +610,7 @@ The number of classes in the circuit.
                 print(&#39;weights:&#39;,G.nodes[best_arch][&#39;weights&#39;])
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
                 for v in leaves_at_depth_d[d]:
-                    print(f&#39;Training leaf {v}&#39;)
+                    #print(f&#39;Training leaf {v}&#39;)
                     #print(&#39;current graph: &#39;,list(G.nodes(data=True)))
                     circuit, pshape,numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev,config)
                     config[&#39;numcnots&#39;]=numcnots
@@ -635,9 +633,7 @@ The number of classes in the circuit.
     best_arch = max(nx.get_node_attributes(G,&#39;W&#39;).items(), key=operator.itemgetter(1))[0]
     print(&#39;architecture with max W: &#39;,best_arch)
     print(&#39;max W:&#39;, G.nodes[best_arch][&#39;W&#39;])
-    print(&#39;weights: &#39;,G.nodes[best_arch][&#39;weights&#39;])
-    import pandas as pd
-    pd.DataFrame(nx.get_node_attributes(G,&#39;W&#39;),orient=&#39;index&#39;).to_csv(&#39;tree_weights.csv&#39;)</code></pre>
+    print(&#39;weights: &#39;,G.nodes[best_arch][&#39;weights&#39;])</code></pre>
 </details>
 </dd>
 <dt id="qose.subarchitecture_tree_search.tree_cost_of_path"><code class="name flex">

@@ -45,27 +45,28 @@ if __name__ == &#34;__main__&#34;:
         os.mkdir(data_path)
 
     # Create a configuration file for the tree prune algorithm
-    config = {&#39;nqubits&#39;: 3,
-              &#39;min_tree_depth&#39;: 4,
-              &#39;max_tree_depth&#39;: 5,
-              &#39;prune_rate&#39;: 0.15,
-              &#39;prune_step&#39;: 3,
+    # Create a configuration file for the tree prune algorithm
+    config = {&#39;nqubits&#39;: 2,
+              &#39;min_tree_depth&#39;: 3,
+              &#39;max_tree_depth&#39;: 4,
+              &#39;prune_rate&#39;: 0.3,
+              &#39;prune_step&#39;: 2,
               &#39;plot_trees&#39;: False,
               &#39;data_set&#39;: &#39;moons&#39;,
-              &#39;nsteps&#39;: 5,
+              &#39;nsteps&#39;: 8,
               &#39;optim&#39;: qml.AdamOptimizer,
-              &#39;batch_sizes&#39;: [8,16,32,64],
-              &#39;n_samples&#39;: 1500,
-              &#39;learning_rates&#39;: [0.001,0.005,0.01],
+              &#39;batch_sizes&#39;: [8,16,32],
+              &#39;n_samples&#39;: 1000,
+              &#39;learning_rates&#39;: [0.1,0.2],
               &#39;save_frequency&#39;: 1,
               &#39;save_path&#39;: data_path,
-              &#39;save_timing&#39;: True,
+              &#39;save_timing&#39;: False,
               &#39;circuit_type&#39;:&#39;schuld&#39;,
               &#39;Tmax&#39;: [100,100,100],
-              &#39;inf_time&#39;:&#39;numcnots&#39;,
+              &#39;inf_time&#39;:&#39;timeit&#39;,
               &#39;fill&#39;:&#39;redundant&#39;, # or &#39;pad&#39;
-              &#39;rate_type&#39;: &#39;accuracy&#39;, # or &#39;batch_cost&#39;
-              &#39;readout_layer&#39;: &#39;one_hot&#39;,  #or &#39;weighted_neuron&#39;
+              &#39;rate_type&#39;: &#39;batch_cost&#39;, # &#39;accuracy&#39; or &#39;batch_cost&#39;
+              &#39;readout_layer&#39;: &#39;one_hot&#39;,  #&#39;one_hot&#39; or &#39;weighted_neuron&#39;
               }
 
     # Save the configuration file so that we can remember what we did

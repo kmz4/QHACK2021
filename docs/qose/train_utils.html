@@ -77,7 +77,7 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
     Args:
         circuit (qml.QNode): A circuit that you want to train
         parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
-        the second one is the number of layers in the circuit architecture. 
+        the second one is the number of layers in the circuit architecture.
         X_train (np.ndarray): An array of floats of size (M, n) to be used as training data.
         Y_train (np.ndarray): An array of size (M,) which are the categorical labels
             associated to the training data.
@@ -98,26 +98,26 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
                     the second is the maximum inference time among all architectures in terms of computing time,
                     the third one is the maximum inference time among all architectures in terms of the number of CNOTS
                     in the circuit
-        
+
             rate_type (string): Determines the type of error rate in the W-coefficient.
                     If rate_type == &#39;accuracy&#39;, the inference time of the circuit
                     is equal to the time it takes to evaluate the accuracy of the trained circuit with
-                    respect to a validation batch three times the size of the training batch size and 
+                    respect to a validation batch three times the size of the training batch size and
                     the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
 
                     If rate_type == &#39;accuracy&#39;, the inference time of the circuit is equal to the time
                     it takes to train the circuit (for nsteps training steps) and compute the cost at
                     each step and the error rate is equal to the cost after nsteps training steps.
 
-            
 
 
- 
+
+
 
     Returns:
         (W_,weights): W-coefficient, trained weights
     &#34;&#34;&#34;
-    print(&#39;batch_size&#39;,type(batch_size))
+    #print(&#39;batch_size&#39;,batch_size)
     # fix the seed while debugging
     #np.random.seed(1337)
     def ohe_cost_fcn(params, circuit, ang_array, actual):
@@ -179,15 +179,15 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         inftime = (end - start) / len(X_validation_batch)
         if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
             err_rate = (1.0 - ohe_accuracy(Y_validation_batch,predictions))+10**-7 #add small epsilon to prevent divide by 0 errors
-            print(&#39;error rate:&#39;,err_rate)
+            #print(&#39;error rate:&#39;,err_rate)
             #print(&#39;weights: &#39;,var)
         elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
             err_rate = (1.0 - wn_accuracy(Y_validation_batch,predictions))+10**-7 #add small epsilon to prevent divide by 0 errors
-            print(&#39;error rate:&#39;,err_rate)
+            #print(&#39;error rate:&#39;,err_rate)
             #print(&#39;weights: &#39;,var)
     elif kwargs[&#39;rate_type&#39;] == &#39;batch_cost&#39;:
         err_rate = (cost) + 10**-7 #add small epsilon to prevent divide by 0 errors
-        print(&#39;error rate:&#39;,err_rate)
+        #print(&#39;error rate:&#39;,err_rate)
         #print(&#39;weights: &#39;,var)
         inftime = cost_time
     # QHACK #
@@ -361,7 +361,7 @@ the error rate is equal to 1-accuracy (w.r.t. to a validation batch).</p>
     Args:
         circuit (qml.QNode): A circuit that you want to train
         parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
-        the second one is the number of layers in the circuit architecture. 
+        the second one is the number of layers in the circuit architecture.
         X_train (np.ndarray): An array of floats of size (M, n) to be used as training data.
         Y_train (np.ndarray): An array of size (M,) which are the categorical labels
             associated to the training data.
@@ -382,26 +382,26 @@ the error rate is equal to 1-accuracy (w.r.t. to a validation batch).</p>
                     the second is the maximum inference time among all architectures in terms of computing time,
                     the third one is the maximum inference time among all architectures in terms of the number of CNOTS
                     in the circuit
-        
+
             rate_type (string): Determines the type of error rate in the W-coefficient.
                     If rate_type == &#39;accuracy&#39;, the inference time of the circuit
                     is equal to the time it takes to evaluate the accuracy of the trained circuit with
-                    respect to a validation batch three times the size of the training batch size and 
+                    respect to a validation batch three times the size of the training batch size and
                     the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
 
                     If rate_type == &#39;accuracy&#39;, the inference time of the circuit is equal to the time
                     it takes to train the circuit (for nsteps training steps) and compute the cost at
                     each step and the error rate is equal to the cost after nsteps training steps.
 
-            
 
 
- 
+
+
 
     Returns:
         (W_,weights): W-coefficient, trained weights
     &#34;&#34;&#34;
-    print(&#39;batch_size&#39;,type(batch_size))
+    #print(&#39;batch_size&#39;,batch_size)
     # fix the seed while debugging
     #np.random.seed(1337)
     def ohe_cost_fcn(params, circuit, ang_array, actual):
@@ -463,15 +463,15 @@ the error rate is equal to 1-accuracy (w.r.t. to a validation batch).</p>
         inftime = (end - start) / len(X_validation_batch)
         if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
             err_rate = (1.0 - ohe_accuracy(Y_validation_batch,predictions))+10**-7 #add small epsilon to prevent divide by 0 errors
-            print(&#39;error rate:&#39;,err_rate)
+            #print(&#39;error rate:&#39;,err_rate)
             #print(&#39;weights: &#39;,var)
         elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
             err_rate = (1.0 - wn_accuracy(Y_validation_batch,predictions))+10**-7 #add small epsilon to prevent divide by 0 errors
-            print(&#39;error rate:&#39;,err_rate)
+            #print(&#39;error rate:&#39;,err_rate)
             #print(&#39;weights: &#39;,var)
     elif kwargs[&#39;rate_type&#39;] == &#39;batch_cost&#39;:
         err_rate = (cost) + 10**-7 #add small epsilon to prevent divide by 0 errors
-        print(&#39;error rate:&#39;,err_rate)
+        #print(&#39;error rate:&#39;,err_rate)
         #print(&#39;weights: &#39;,var)
         inftime = cost_time
     # QHACK #
