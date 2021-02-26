@@ -42,6 +42,28 @@ def mse(labels, predictions):
         loss += np.sum((l - p) ** 2)
     return loss / labels.shape[0]
 
+def make_predictions(circuit,pre_trained_vals,X,Y,**kwargs):
+
+    if kwargs['readout_layer']=='one_hot':
+        var = pre_trained_vals
+
+    elif kwargs['readout_layer']=="weighted_neuron":
+        var = pre_trained_vals
+
+    # make final predictions
+    if kwargs['readout_layer']=='one_hot':
+        final_predictions = np.stack([circuit(var, x) for x in X])
+        acc=ohe_accuracy(Y,predictions)
+
+    elif kwargs['readout_layer']=='weighted_neuron':
+        from autograd.numpy import exp
+        n = kwargs.get('nqubits')
+        w = var[:,-1]
+        theta = var[:,:-1].numpy()
+        final_predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1.,1)) for x in X]
+        acc=wn_accuracy(Y,predictions)
+
+    return final_predictions,acc
 
 def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learning_rate,**kwargs):
     """
@@ -189,3 +211,115 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
             Wmax = wtemp
             saved_weights = weights
     return Wmax, saved_weights
+
+def train_best(circuit, pre_trained_vals,X_train, Y_train, batch_size, learning_rate,**kwargs):
+    """
+    train a circuit classifier
+    Args:
+        circuit (qml.QNode): A circuit that you want to train
+        parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+        the second one is the number of layers in the circuit architecture.
+        X_train (np.ndarray): An array of floats of size (M, n) to be used as training data.
+        Y_train (np.ndarray): An array of size (M,) which are the categorical labels
+            associated to the training data.
+
+        batch_size (int): Batch size for the circuit training.
+
+        learning_rate (float): The learning rate/step size of the optimizer.
+
+        kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
+
+            nsteps (int) : Number of training steps.
+
+            optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
+                Pass as qml.OptimizerName.
+
+            Tmax (list): Maximum point T as defined in https://arxiv.org/abs/2010.08512. (Definition 8)
+                    The first element is the maximum number of parameters among all architectures,
+                    the second is the maximum inference time among all architectures in terms of computing time,
+                    the third one is the maximum inference time among all architectures in terms of the number of CNOTS
+                    in the circuit
+
+            rate_type (string): Determines the type of error rate in the W-coefficient.
+                    If rate_type == 'accuracy', the inference time of the circuit
+                    is equal to the time it takes to evaluate the accuracy of the trained circuit with
+                    respect to a validation batch three times the size of the training batch size and
+                    the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
+
+                    If rate_type == 'accuracy', the inference time of the circuit is equal to the time
+                    it takes to train the circuit (for nsteps training steps) and compute the cost at
+                    each step and the error rate is equal to the cost after nsteps training steps.
+
+    Returns:
+        (Yprime,acc): final predictions, final accuracy
+    """
+    from autograd.numpy import exp
+    def ohe_cost_fcn(params, circuit, ang_array, actual):
+        '''
+        use MAE to start
+        '''
+        predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
+        return mse(actual, predictions)
+
+    def wn_cost_fcn(params, circuit, ang_array, actual):
+        '''
+        use MAE to start
+        '''
+        w = params[:,-1]
+
+        theta = params[:,:-1]
+        print(w.shape,w,theta.shape,theta)
+        predictions = np.asarray([2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta,x)))))- 1. for x in ang_array])
+        return mse(actual, predictions)
+
+    if kwargs['readout_layer']=='one_hot':
+        var = pre_trained_vals
+    elif kwargs['readout_layer']=="weighted_neuron":
+        var = pre_trained_vals
+    rate_type = kwargs['rate_type']
+    optim = kwargs['optim']
+    num_train = len(Y_train)
+    validation_size = int(0.1*num_train)
+    opt = optim(stepsize=learning_rate) #all optimizers in autograd module take in argument stepsize, so this works for all
+
+    for _ in range(kwargs['nsteps']):
+        batch_index = np.random.randint(0, num_train, (batch_size,))
+        X_train_batch = np.asarray(X_train[batch_index])
+        Y_train_batch = np.asarray(Y_train[batch_index])
+
+        if kwargs['readout_layer']=='one_hot':
+            var, cost = opt.step_and_cost(lambda v: ohe_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
+        elif kwargs['readout_layer']=='weighted_neuron':
+            print(var)
+            var, cost = opt.step_and_cost(lambda v: wn_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
+        print(_,cost)
+        # check for early stopping
+        if _%5==0:
+            validation_batch = np.random.randint(0, num_train, (validation_size,))
+            X_validation_batch = np.asarray(X_train[validation_batch])
+            Y_validation_batch = np.asarray(Y_train[validation_batch])
+            if kwargs['rate_type'] == 'accuracy':
+                if kwargs['readout_layer']=='one_hot':
+                    predictions = np.stack([circuit(var, x) for x in X_validation_batch])
+                    acc=ohe_accuracy(Y_validation_batch,predictions)
+                elif kwargs['readout_layer']=='weighted_neuron':
+                    n = kwargs.get('nqubits')
+                    w = var[:,-1]
+                    theta = var[:,:-1].numpy()
+                    predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, x)))))- 1.,1)) for x in X_validation_batch]
+                    acc=wn_accuracy(Y_validation_batch,predictions)
+                if acc>0.95:
+                    break
+
+            elif kwargs['rate_type'] == 'batch_cost':
+                if cost < 0.001:
+                    break
+    # make final predictions
+    if kwargs['readout_layer']=='one_hot':
+        final_predictions = np.stack([circuit(var, x) for x in X_train])
+    elif kwargs['readout_layer']=='weighted_neuron':
+        n = kwargs.get('nqubits')
+        w = var[:,-1]
+        theta = var[:,:-1]
+        final_predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, x)))))- 1.,1)) for x in X_train]
+    return var,final_predictions
