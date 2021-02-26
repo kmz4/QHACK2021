@@ -46,4 +46,4 @@ if __name__ == "__main__":
         pickle.dump(config, f)
 
     # Execute the algorithm
-    run_tree_architecture_search(config)
+    run_tree_architecture_search(config, 'remote')
