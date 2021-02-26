@@ -36,8 +36,10 @@ python setup.py install
 
 ### References
 
-    De Wynter (2020) "An Approximation Algorithm for Optimal Subarchitecture Extraction" [arxiv.org/abs/2010.08512]
-    De Wynter and Perry (2020) "Optimal Subarchitecture Extraction for BERT" [arxiv.org/abs/2010.10499]
+    De Wynter (2020) "An Approximation Algorithm for Optimal Subarchitecture Extraction" 
+    [arxiv.org/abs/2010.08512]
+    De Wynter and Perry (2020) "Optimal Subarchitecture Extraction for BERT" 
+    [arxiv.org/abs/2010.10499]
 
-this module was developed as part of QHACK 2021_
+_this module was developed as part of QHACK 2021_
 
