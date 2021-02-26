@@ -13,20 +13,12 @@ Since running exponentially large circuits are liable to run into barren plateau
 QOSE is a version of OSE (optimal subarchitecture extraction) that is an adaptation of the FPTAS algorithm introduced in arxiv.org/abs/2010.08512 for parameterized quantum circuits and written using PennyLane. 
 
 ## Installation instruction 
-_don't do this yet_
 
 ```
 git clone <this repo>
 cd QHACK2021
-pip install .
+python setup.py install
 ```
-
-To run QOSE from the terminal call
-
-```
-python3 driver_code.py
-```
-
 
 References
 
