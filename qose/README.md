@@ -32,3 +32,13 @@ will result in the folder structure
 This data can be retrieved in the script `restore_tree.py`. And will result in a plot of the circuit Tree from that
 experiment.
   
+## Paralellization on AWS
+
+In an MPI enabled environment, we can call `driver_code_par.py` instead of `driver_code.py` with the following 
+command:
+```bash
+mpiexec -n 1 --oversubscribe python3 driver_code_par.py
+```
+Which will parallelize the leaf calculation in the tree. For our project, this was confirmed to work on a
+ml.m5.24xlarge AWS instance, that allowed for parallel calculation of up to 90 circuits, constructing a massive tree of 
+possible architectures as a result:
