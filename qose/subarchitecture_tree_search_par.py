@@ -236,7 +236,7 @@ def run_tree_architecture_search(config: dict, dev_type: str):
     if ct_ == 'hardware':
         possible_layers = ['hw_CNOT', 'X', 'Y', 'Z']
         config['parameterized_gates'] = ['X', 'Y', 'Z']
-    possible_embeddings = ['E1', ]
+    possible_embeddings = [config['embedding'], ]
     assert all([l in string_to_layer_mapping.keys() for l in
                 possible_layers]), 'No valid mapping from string to function found'
     assert all([l in string_to_embedding_mapping.keys() for l in

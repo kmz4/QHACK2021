@@ -19,6 +19,7 @@ if __name__ == "__main__":
     # Create a configuration file for the tree prune algorithm
     # Create a configuration file for the tree prune algorithm
     config = {'nqubits': 2,
+              'embedding': 'E3',
               'min_tree_depth': 3,
               'max_tree_depth': 4,
               'prune_rate': 0.3,
