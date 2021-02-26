@@ -1,6 +1,5 @@
 import pennylane as qml
 from pennylane import numpy as np
-from featuremaps import *
 
 def cycle_CNOT_layer(wires):
     nq = len(wires)
@@ -48,28 +47,15 @@ def embedding_1(X, wires,fill='redundant'):
             large_features = np.tile(X,r_)
         elif fill=='pad':
             large_features = np.pad(X,(0,len(wires)),'constant',constant_values=0)
-        qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation='Y')
+        qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation='Y') # replace with more general embedding
     else:
-        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation='Y')
+        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation='Y') # replace with more general embedding
+    qml.templates.embeddings.AngleEmbedding(X, wires=wires)
 
-def embedding_2(X, wires,fill='redundant'):
-    if len(X)<len(wires):
-        r_ = len(wires)//len(X)
-        if fill=='redundant':
-            large_features = np.tile(X,r_)
-        elif fill=='pad':
-            large_features = np.pad(X,(0,len(wires)),'constant',constant_values=0)
-        qml.templates.embeddings.AmplitudeEmbedding(large_features, wires=wires)
-    else:
-        qml.templates.embeddings.AmplitudeEmbedding(X, wires=wires)
-]
+
 # TODO: ADD W-COST HERE
 
 string_to_layer_mapping = {'ZZ': zz_layer,\
                         'X': x_layer, 'Y': y_layer,'Z':z_layer,\
                         'hw_CNOT':path_CNOT_layer}
-string_to_embedding_mapping = {'E1': embedding_1, 'E2': embedding_2, 'E3': qaoa, 'E4': XXZ, 'E5': aspuru, 'E6': random_embed}
-
-
-
-
+string_to_embedding_mapping = {'E1': embedding_1}
