@@ -14,8 +14,8 @@ def hinge_loss(labels, predictions, type='L2'):
     """
 
     Args:
-      labels: 
-      predictions: 
+      labels:
+      predictions:
       type:  (Default value = 'L2')
 
     Returns:
@@ -35,8 +35,8 @@ def ohe_accuracy(labels, predictions):
     """
 
     Args:
-      labels: 
-      predictions: 
+      labels:
+      predictions:
 
     Returns:
 
@@ -50,8 +50,8 @@ def wn_accuracy(labels, predictions):
     """
 
     Args:
-      labels: 
-      predictions: 
+      labels:
+      predictions:
 
     Returns:
 
@@ -71,8 +71,8 @@ def mse(labels, predictions):
     """
 
     Args:
-      labels: 
-      predictions: 
+      labels:
+      predictions:
 
     Returns:
 
@@ -87,11 +87,11 @@ def make_predictions(circuit,pre_trained_vals,X,Y,**kwargs):
     """
 
     Args:
-      circuit: 
-      pre_trained_vals: 
-      X: 
-      Y: 
-      **kwargs: 
+      circuit:
+      pre_trained_vals:
+      X:
+      Y:
+      **kwargs:
 
     Returns:
 
@@ -148,7 +148,7 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
     If rate_type == 'accuracy', the inference time of the circuit is equal to the time
     it takes to train the circuit (for nsteps training steps) and compute the cost at
     each step and the error rate is equal to the cost after nsteps training steps.
-      **kwargs: 
+      **kwargs:
 
     Returns:
       W_: W-coefficient, trained weights
@@ -161,10 +161,10 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         """use MAE to start
 
         Args:
-          params: 
-          circuit: 
-          ang_array: 
-          actual: 
+          params:
+          circuit:
+          ang_array:
+          actual:
 
         Returns:
 
@@ -176,10 +176,10 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         """use MAE to start
 
         Args:
-          params: 
-          circuit: 
-          ang_array: 
-          actual: 
+          params:
+          circuit:
+          ang_array:
+          actual:
 
         Returns:
 
@@ -247,11 +247,11 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
 
     if kwargs['inf_time'] =='timeit':
 
-        W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[1] - inftime) / (Tmax[1])) * (1. / err_rate)
+        W_ = (Tmax[0] - len(var) / (Tmax[0])) * (Tmax[1] - inftime) / (Tmax[1]) * (1. / err_rate)
 
     elif kwargs['inf_time']=='numcnots':
         nc_ = numcnots
-        W_ = np.abs((Tmax[0] - len(var)) / (Tmax[0])) * np.abs((Tmax[2] - nc_) / (Tmax[2])) * (1. / err_rate)
+        W_ = (Tmax[0] - len(var) / (Tmax[0])) * (Tmax[2] - nc_) / (Tmax[2]) * (1. / err_rate)
 
     return W_,var
 
@@ -260,11 +260,11 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
     batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists
 
     Args:
-      circuit: 
-      n_params: 
-      X_train: 
-      Y_train: 
-      **kwargs: 
+      circuit:
+      n_params:
+      X_train:
+      Y_train:
+      **kwargs:
 
     Returns:
 
@@ -310,8 +310,8 @@ def train_best(circuit, pre_trained_vals,X_train, Y_train, batch_size, learning_
     If rate_type == 'accuracy', the inference time of the circuit is equal to the time
     it takes to train the circuit (for nsteps training steps) and compute the cost at
     each step and the error rate is equal to the cost after nsteps training steps.
-      pre_trained_vals: 
-      **kwargs: 
+      pre_trained_vals:
+      **kwargs:
 
     Returns:
       Yprime: final predictions, final accuracy
@@ -322,10 +322,10 @@ def train_best(circuit, pre_trained_vals,X_train, Y_train, batch_size, learning_
         """use MAE to start
 
         Args:
-          params: 
-          circuit: 
-          ang_array: 
-          actual: 
+          params:
+          circuit:
+          ang_array:
+          actual:
 
         Returns:
 
@@ -337,10 +337,10 @@ def train_best(circuit, pre_trained_vals,X_train, Y_train, batch_size, learning_
         """use MAE to start
 
         Args:
-          params: 
-          circuit: 
-          ang_array: 
-          actual: 
+          params:
+          circuit:
+          ang_array:
+          actual:
 
         Returns:
 
