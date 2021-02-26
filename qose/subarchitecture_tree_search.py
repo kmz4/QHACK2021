@@ -6,7 +6,7 @@ import networkx as nx
 from sklearn import datasets
 from typing import List
 import operator
-from qose.circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
+from qose.circuit_utils import string_to_layer_mapping, string_to_embedding_mapping, construct_circuit_from_leaf
 from qose.train_utils import train_circuit, evaluate_w
 from qose.plot_utils import plot_tree
 
@@ -82,49 +82,6 @@ def tree_cost_of_path(G: nx.DiGraph, leaf: str) -> float:
     """
     paths = nx.shortest_path(G, 'ROOT', leaf)
     return sum([G.nodes[node]['W'] for node in paths])
-
-
-def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device, config: dict):
-    """
-    Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
-
-    :param leaf: String that corresponds to a leaf in the tree.
-    :param nqubits: The number of qubits in the circuit.
-    :param nclasses:  The number of classes in the circuit.
-    :param dev: PennyLane Device.
-    :return: QNode corresponding to the circuit.
-    """
-    architecture = leaf.split(':')
-
-    # The first layer must be an embedding layer
-    embedding_circuit = architecture.pop(0)
-
-    def circuit_from_architecture(params, features):
-        # lookup the function in the embedding dict, call with features being passed.
-        string_to_embedding_mapping[embedding_circuit](features, dev.wires)
-        # for each layer, lookup the function in the layer dict, call with parameters being passed.
-        for d, component in enumerate(architecture):
-            if component == 'hw_CNOT':
-                string_to_layer_mapping[component](list(range(nqubits)))
-            else:
-                string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
-        # return an expectation value for each class so we can compare with one hot encoded labels.
-        if nqubits > nclasses:
-            return [qml.expval(qml.PauliZ(nc)) for nc in range(nqubits)]
-        else:
-            return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
-
-    # Return the shape of the parameters so we can initialize them correctly later on.
-    if config['circuit_type'] == 'schuld':
-        params_shape = (nqubits, len(architecture))
-        numcnots = architecture.count('ZZ') * 2 * nqubits  # count the number of cnots
-    elif config['circuit_type'] == 'hardware':
-        param_gates = [x for x in architecture if x != 'CNOT']
-        params_shape = (nqubits, len(param_gates))
-        params_shape = (nqubits, len(architecture))
-        numcnots = architecture.count('CNOT') * (nqubits - 1)  # Each CNOT layer has (n-1) CNOT gates
-    # create and return a QNode
-    return qml.QNode(circuit_from_architecture, dev), params_shape, numcnots  # give back the number of cnots
 
 
 def run_tree_architecture_search(config: dict, dev_type: str):

@@ -4,6 +4,7 @@ from qose.train_utils import evaluate_w
 from qose.circuit_utils import construct_circuit_from_leaf
 import pickle
 
+
 comm = MPI.Comm.Get_parent()
 size = comm.Get_size()
 rank = comm.Get_rank()

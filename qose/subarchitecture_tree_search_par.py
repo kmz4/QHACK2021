@@ -6,9 +6,9 @@ import networkx as nx
 from sklearn import datasets
 from typing import List
 import operator
-from circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
-from train_utils import evaluate_w
-from plot_utils import plot_tree
+from qose.circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
+from qose.train_utils import evaluate_w
+from qose.plot_utils import plot_tree
 
 from mpi4py import MPI
 import sys
@@ -134,7 +134,7 @@ def train_all_leaves_parallel(G, leaves_at_depth_d, d, config):
     for leaves_chunked in chunks(leaves_at_depth_d[d], config['nprocesses']):
         print(f'Sending chunks: {leaves_chunked}')
         comm = MPI.COMM_SELF.Spawn(sys.executable,
-                                   args=['mpi_evaluate_w.py'],
+                                   args=['scripts/mpi_evaluate_w.py'],
                                    maxprocs=len(leaves_chunked))
         #         comm.bcast([i for i in range(len(leaves_chunked))])
         #         N = np.array(list(range(50)), 'i')
