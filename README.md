@@ -1,5 +1,12 @@
-#QOSE (Quantum Optimal Subarchitecture Extraction)
+# QOSE (Quantum Optimal Subarchitecture Extraction)
 _pronounciation: "cozy"_ 
+
+#### Contributers:
+* Jelena Mackeprang 
+* Roland Wiersema
+* Aroosa Ijaz
+* Kathleen Hamilton
+* Yash Chitgopekar
 
 Determining the optimal quantum circuit structure for a parameterized model that will be trained as a quantum circuit classifier.  Heuristic ansatz design involves searching over a large parameter space including: depth, number of qubits, entangler layer design, initialization, optimizer choice (and associated hyperparameters), embedding..
 
@@ -15,18 +22,10 @@ cd QHACK2021
 python setup.py install
 ```
 
-References
+### References
 
     De Wynter (2020) "An Approximation Algorithm for Optimal Subarchitecture Extraction" [arxiv.org/abs/2010.08512]
     De Wynter and Perry (2020) "Optimal Subarchitecture Extraction for BERT" [arxiv.org/abs/2010.10499]
-
-
-Contributers:
-* Jelena Mackeprang 
-* Roland Wiersema
-* Aroosa Ijaz
-* Kathleen Hamilton
-* Yash Chitgopekar
 
 _this module was developed as part of QHACK 2021_
 
