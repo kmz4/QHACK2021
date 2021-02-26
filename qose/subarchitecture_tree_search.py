@@ -12,13 +12,19 @@ from qose.plot_utils import plot_tree
 
 
 def tree_prune(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, prune_rate: float):
-    """
-    Remove nodes from the tree based on the set prune rate and the total cost of the path from root to leaf.
+    """Remove nodes from the tree based on the set prune rate and the total cost of the path from root to leaf.
 
-    :param G: NetworkX DiGraph object that represents our tree.
-    :param leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
-    :param d: the depth that we are pruning at
-    :param prune_rate: The percentage of leaves to be removed
+    Args:
+      G: NetworkX DiGraph object that represents our tree.
+      leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
+      d: the depth that we are pruning at
+      prune_rate: The percentage of leaves to be removed
+      G: nx.DiGraph: 
+      leaves_at_depth_d: dict: 
+      d: int: 
+      prune_rate: float: 
+
+    Returns:
 
     """
     cost_at_leaf = []
@@ -35,12 +41,17 @@ def tree_prune(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, prune_rate: float
 
 
 def tree_grow_root(G: nx.DiGraph, leaves_at_depth_d: dict, layers: List[str]):
-    """
-    Initialize the tree with edges from the Root to the first branches.
+    """Initialize the tree with edges from the Root to the first branches.
 
-    :param G: NetworkX DiGraph object that represents our tree.
-    :param leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
-    :param layers: List of strings containing embedding layers that can be added as first layer.
+    Args:
+      G: NetworkX DiGraph object that represents our tree.
+      leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
+      layers: List of strings containing embedding layers that can be added as first layer.
+      G: nx.DiGraph: 
+      leaves_at_depth_d: dict: 
+      layers: List[str]: 
+
+    Returns:
 
     """
     # loop over the possible layers that we can add
@@ -50,13 +61,19 @@ def tree_grow_root(G: nx.DiGraph, leaves_at_depth_d: dict, layers: List[str]):
 
 
 def tree_grow(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, layers: List[str]):
-    """
-    Grow the tree by adding a circuit layer.
+    """Grow the tree by adding a circuit layer.
 
-    :param G: NetworkX DiGraph object that represents our tree.
-    :param leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
-    :param d: the depth that we are pruning at
-    :param layers: List of strings of possible classification layers that can be added.
+    Args:
+      G: NetworkX DiGraph object that represents our tree.
+      leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
+      d: the depth that we are pruning at
+      layers: List of strings of possible classification layers that can be added.
+      G: nx.DiGraph: 
+      leaves_at_depth_d: dict: 
+      d: int: 
+      layers: List[str]: 
+
+    Returns:
 
     """
     # loop over the leaves at depth d
@@ -73,36 +90,45 @@ def tree_grow(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, layers: List[str])
 
 
 def tree_cost_of_path(G: nx.DiGraph, leaf: str) -> float:
-    """
-    Calculate the cost of going from the root of the tree to a leaf. Total cost is the sum of all W-costs.
+    """Calculate the cost of going from the root of the tree to a leaf. Total cost is the sum of all W-costs.
 
-    :param G: NetworkX DiGraph object that represents our tree.
-    :param leaf: String that corresponds to a leaf in the tree.
-    :return: float value corresponding to the cost.
+    Args:
+      G: NetworkX DiGraph object that represents our tree.
+      leaf: String that corresponds to a leaf in the tree.
+      G: nx.DiGraph: 
+      leaf: str: 
+
+    Returns:
+      float value corresponding to the cost.
+
     """
     paths = nx.shortest_path(G, 'ROOT', leaf)
     return sum([G.nodes[node]['W'] for node in paths])
 
 
 def run_tree_architecture_search(config: dict, dev_type: str):
-    """
-    The main workhorse for running the algorithm
+    """The main workhorse for running the algorithm
 
-    :param config: Dictionary with configuration parameters for the algorithm. Possible keys are:
-        - nqubits: Integer. The number of qubits in the circuit
-        - min_tree_depth: Integer. Minimum circuit depth before we start pruning
-        - max_tree_depth: Integer. Maximum circuit depth
-        - prune_rate: Integer. Percentage of nodes that we throw away when we prune
-        - prune_step: Integer. How often do we prune
-        - plot_trees: Boolean. Do we want to plot the tree at every depth?
-        - data_set: String. Which dataset are we learning? Can be 'moons' or 'circles'
-        - nsteps: Integer. The number of steps for training.
-        - opt: qml.Optimizer. Pennylane optimizer
-        - batch_size: Integer. Batch size for training.
-        - n_samples: Integer. Number of samples that we want to take from the data set.
-        - learning_rate: Float. Optimizer learning rate.
-        - save_frequency: Integer. How often do we want to save the tree? Set to 0 for no saving.
-        - save_path: String. Location to store the data.
+    Args:
+      config: Dictionary with configuration parameters for the algorithm. Possible keys are:
+    - nqubits: Integer. The number of qubits in the circuit
+    - min_tree_depth: Integer. Minimum circuit depth before we start pruning
+    - max_tree_depth: Integer. Maximum circuit depth
+    - prune_rate: Integer. Percentage of nodes that we throw away when we prune
+    - prune_step: Integer. How often do we prune
+    - plot_trees: Boolean. Do we want to plot the tree at every depth?
+    - data_set: String. Which dataset are we learning? Can be 'moons' or 'circles'
+    - nsteps: Integer. The number of steps for training.
+    - opt: qml.Optimizer. Pennylane optimizer
+    - batch_size: Integer. Batch size for training.
+    - n_samples: Integer. Number of samples that we want to take from the data set.
+    - learning_rate: Float. Optimizer learning rate.
+    - save_frequency: Integer. How often do we want to save the tree? Set to 0 for no saving.
+    - save_path: String. Location to store the data.
+      config: dict: 
+      dev_type: str: 
+
+    Returns:
 
     """
     # build in:  circuit type

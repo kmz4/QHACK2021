@@ -16,13 +16,19 @@ import pickle
 
 
 def tree_prune(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, prune_rate: float):
-    """
-    Remove nodes from the tree based on the set prune rate and the total cost of the path from root to leaf.
+    """Remove nodes from the tree based on the set prune rate and the total cost of the path from root to leaf.
 
-    :param G: NetworkX DiGraph object that represents our tree.
-    :param leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
-    :param d: the depth that we are pruning at
-    :param prune_rate: The percentage of leaves to be removed
+    Args:
+      G: NetworkX DiGraph object that represents our tree.
+      leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
+      d: the depth that we are pruning at
+      prune_rate: The percentage of leaves to be removed
+      G: nx.DiGraph: 
+      leaves_at_depth_d: dict: 
+      d: int: 
+      prune_rate: float: 
+
+    Returns:
 
     """
     cost_at_leaf = []
@@ -39,12 +45,17 @@ def tree_prune(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, prune_rate: float
 
 
 def tree_grow_root(G: nx.DiGraph, leaves_at_depth_d: dict, layers: List[str]):
-    """
-    Initialize the tree with edges from the Root to the first branches.
+    """Initialize the tree with edges from the Root to the first branches.
 
-    :param G: NetworkX DiGraph object that represents our tree.
-    :param leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
-    :param layers: List of strings containing embedding layers that can be added as first layer.
+    Args:
+      G: NetworkX DiGraph object that represents our tree.
+      leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
+      layers: List of strings containing embedding layers that can be added as first layer.
+      G: nx.DiGraph: 
+      leaves_at_depth_d: dict: 
+      layers: List[str]: 
+
+    Returns:
 
     """
     # loop over the possible layers that we can add
@@ -54,13 +65,19 @@ def tree_grow_root(G: nx.DiGraph, leaves_at_depth_d: dict, layers: List[str]):
 
 
 def tree_grow(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, layers: List[str]):
-    """
-    Grow the tree by adding a circuit layer.
+    """Grow the tree by adding a circuit layer.
 
-    :param G: NetworkX DiGraph object that represents our tree.
-    :param leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
-    :param d: the depth that we are pruning at
-    :param layers: List of strings of possible classification layers that can be added.
+    Args:
+      G: NetworkX DiGraph object that represents our tree.
+      leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
+      d: the depth that we are pruning at
+      layers: List of strings of possible classification layers that can be added.
+      G: nx.DiGraph: 
+      leaves_at_depth_d: dict: 
+      d: int: 
+      layers: List[str]: 
+
+    Returns:
 
     """
     # loop over the leaves at depth d
@@ -77,26 +94,39 @@ def tree_grow(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, layers: List[str])
 
 
 def tree_cost_of_path(G: nx.DiGraph, leaf: str) -> float:
-    """
-    Calculate the cost of going from the root of the tree to a leaf. Total cost is the sum of all W-costs.
+    """Calculate the cost of going from the root of the tree to a leaf. Total cost is the sum of all W-costs.
 
-    :param G: NetworkX DiGraph object that represents our tree.
-    :param leaf: String that corresponds to a leaf in the tree.
-    :return: float value corresponding to the cost.
+    Args:
+      G: NetworkX DiGraph object that represents our tree.
+      leaf: String that corresponds to a leaf in the tree.
+      G: nx.DiGraph: 
+      leaf: str: 
+
+    Returns:
+      float value corresponding to the cost.
+
     """
     paths = nx.shortest_path(G, 'ROOT', leaf)
     return sum([G.nodes[node]['W'] for node in paths])
 
 
 def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device, config: dict):
-    """
-    Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
+    """Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
 
-    :param leaf: String that corresponds to a leaf in the tree.
-    :param nqubits: The number of qubits in the circuit.
-    :param nclasses:  The number of classes in the circuit.
-    :param dev: PennyLane Device.
-    :return: QNode corresponding to the circuit.
+    Args:
+      leaf: String that corresponds to a leaf in the tree.
+      nqubits: The number of qubits in the circuit.
+      nclasses: The number of classes in the circuit.
+      dev: PennyLane Device.
+      leaf: str: 
+      nqubits: int: 
+      nclasses: int: 
+      dev: qml.Device: 
+      config: dict: 
+
+    Returns:
+      QNode corresponding to the circuit.
+
     """
     architecture = leaf.split(':')
 
@@ -104,6 +134,15 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
     embedding_circuit = architecture.pop(0)
 
     def circuit_from_architecture(params, features):
+        """
+
+        Args:
+          params: 
+          features: 
+
+        Returns:
+
+        """
         # lookup the function in the embedding dict, call with features being passed.
         string_to_embedding_mapping[embedding_circuit](features, dev.wires)
         # for each layer, lookup the function in the layer dict, call with parameters being passed.
@@ -125,12 +164,31 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
 
 
 def chunks(lst, n):
-    """Yield successive n-sized chunks from lst."""
+    """Yield successive n-sized chunks from lst.
+
+    Args:
+      lst: 
+      n: 
+
+    Returns:
+
+    """
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
 
 def train_all_leaves_parallel(G, leaves_at_depth_d, d, config):
+    """
+
+    Args:
+      G: 
+      leaves_at_depth_d: 
+      d: 
+      config: 
+
+    Returns:
+
+    """
     for leaves_chunked in chunks(leaves_at_depth_d[d], config['nprocesses']):
         print(f'Sending chunks: {leaves_chunked}')
         comm = MPI.COMM_SELF.Spawn(sys.executable,
@@ -154,24 +212,28 @@ def train_all_leaves_parallel(G, leaves_at_depth_d, d, config):
 
 
 def run_tree_architecture_search(config: dict, dev_type: str):
-    """
-    The main workhorse for running the algorithm
+    """The main workhorse for running the algorithm
 
-    :param config: Dictionary with configuration parameters for the algorithm. Possible keys are:
-        - nqubits: Integer. The number of qubits in the circuit
-        - min_tree_depth: Integer. Minimum circuit depth before we start pruning
-        - max_tree_depth: Integer. Maximum circuit depth
-        - prune_rate: Integer. Percentage of nodes that we throw away when we prune
-        - prune_step: Integer. How often do we prune
-        - plot_trees: Boolean. Do we want to plot the tree at every depth?
-        - data_set: String. Which dataset are we learning? Can be 'moons' or 'circles'
-        - nsteps: Integer. The number of steps for training.
-        - opt: qml.Optimizer. Pennylane optimizer
-        - batch_size: Integer. Batch size for training.
-        - n_samples: Integer. Number of samples that we want to take from the data set.
-        - learning_rate: Float. Optimizer learning rate.
-        - save_frequency: Integer. How often do we want to save the tree? Set to 0 for no saving.
-        - save_path: String. Location to store the data.
+    Args:
+      config: Dictionary with configuration parameters for the algorithm. Possible keys are:
+    - nqubits: Integer. The number of qubits in the circuit
+    - min_tree_depth: Integer. Minimum circuit depth before we start pruning
+    - max_tree_depth: Integer. Maximum circuit depth
+    - prune_rate: Integer. Percentage of nodes that we throw away when we prune
+    - prune_step: Integer. How often do we prune
+    - plot_trees: Boolean. Do we want to plot the tree at every depth?
+    - data_set: String. Which dataset are we learning? Can be 'moons' or 'circles'
+    - nsteps: Integer. The number of steps for training.
+    - opt: qml.Optimizer. Pennylane optimizer
+    - batch_size: Integer. Batch size for training.
+    - n_samples: Integer. Number of samples that we want to take from the data set.
+    - learning_rate: Float. Optimizer learning rate.
+    - save_frequency: Integer. How often do we want to save the tree? Set to 0 for no saving.
+    - save_path: String. Location to store the data.
+      config: dict: 
+      dev_type: str: 
+
+    Returns:
 
     """
     # build in:  circuit type
