@@ -163,10 +163,7 @@ def run_tree_architecture_search(config: dict, dev_type: str):
     if dev_type == "local":
         dev = qml.device("default.qubit.autograd", wires=NQUBITS)
     elif dev_type == "remote":
-        my_bucket = "amazon-braket-0fc49b964f85"  # the name of the bucket
-        my_prefix = PATH.split('/')[1]  # name of the folder in the bucket is the same as experiment name
-        s3_folder = (my_bucket, my_prefix)
-        device_arn = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
+        # add bucket and address info here from slack
         dev = qml.device("braket.aws.qubit", device_arn=device_arn, wires=NQUBITS, s3_destination_folder=s3_folder,
                          parallel=True, max_parallel=30, poll_timeout_seconds=30)
 
