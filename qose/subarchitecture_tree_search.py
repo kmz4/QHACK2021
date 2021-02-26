@@ -1,3 +1,9 @@
+"""
+Subarchitecture tree search
+***************************
+Execute the search tree algorithm. Here, we iteratively construct a tree, where more layers are being added at each
+depth d of the tree. We prune the tree by considering only a percentage of highest weighted paths from root to leaf.
+"""
 import pennylane as qml
 from pennylane import numpy as np
 

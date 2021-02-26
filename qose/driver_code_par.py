@@ -1,8 +1,17 @@
+"""
+Driver code par
+***************
+This script launches the tree search with a given configuration. We use MPI4Py to parallelize calculating the circuits
+ at the leaves of the tree. Can be launched from the command line
+with `mpiexec -n 1 --oversubscribe python driver_code_par.py`.
+"""
 from qose.subarchitecture_tree_search_par import run_tree_architecture_search
 import pennylane as qml
 
 import os
 import pickle
+
+
 
 if __name__ == "__main__":
     # Create a unique name for your experiment

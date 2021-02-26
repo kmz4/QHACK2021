@@ -1,3 +1,8 @@
+"""
+Plot utils
+************
+Code to plot the search tree.
+"""
 import matplotlib.pyplot as plt
 import networkx as nx
 

@@ -1,8 +1,15 @@
+"""
+Driver code
+************
+This script launches the tree search with a given configuration. Can be launched from the command line
+with `python driver_code.py`.
+"""
 from qose.subarchitecture_tree_search import run_tree_architecture_search
 import pennylane as qml
 
 import os
 import pickle
+
 
 if __name__ == "__main__":
     # Create a unique name for your experiment

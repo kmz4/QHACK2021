@@ -1,3 +1,10 @@
+"""
+Subarchitecture tree search (parallel)
+**************************************
+Execute the search tree algorithm. Here, we iteratively construct a tree, where more layers are being added at each
+depth d of the tree. We prune the tree by considering only a percentage of highest weighted paths from root to leaf.
+This MPI enabled version allows for concurrent calculation of all circuits at depth d, massivevly speeding up computations
+"""
 import pennylane as qml
 from pennylane import numpy as np
 

@@ -1,4 +1,8 @@
-import pennylane as qml
+"""
+Train utils
+**************************************
+Losses, training loops and helper functions used during training.
+"""
 from pennylane import numpy as np
 import autograd.numpy as np
 from autograd.numpy import exp
