@@ -47,10 +47,6 @@ def tree_prune(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, prune_rate: float
       leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
       d: the depth that we are pruning at
       prune_rate: The percentage of leaves to be removed
-      G: nx.DiGraph: 
-      leaves_at_depth_d: dict: 
-      d: int: 
-      prune_rate: float: 
 
     Returns:
 
@@ -75,9 +71,6 @@ def tree_grow_root(G: nx.DiGraph, leaves_at_depth_d: dict, layers: List[str]):
       G: NetworkX DiGraph object that represents our tree.
       leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
       layers: List of strings containing embedding layers that can be added as first layer.
-      G: nx.DiGraph: 
-      leaves_at_depth_d: dict: 
-      layers: List[str]: 
 
     Returns:
 
@@ -96,10 +89,7 @@ def tree_grow(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, layers: List[str])
       leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
       d: the depth that we are pruning at
       layers: List of strings of possible classification layers that can be added.
-      G: nx.DiGraph: 
-      leaves_at_depth_d: dict: 
-      d: int: 
-      layers: List[str]: 
+
 
     Returns:
 
@@ -123,8 +113,6 @@ def tree_cost_of_path(G: nx.DiGraph, leaf: str) -&gt; float:
     Args:
       G: NetworkX DiGraph object that represents our tree.
       leaf: String that corresponds to a leaf in the tree.
-      G: nx.DiGraph: 
-      leaf: str: 
 
     Returns:
       float value corresponding to the cost.
@@ -609,10 +597,6 @@ dev_type: str: </li>
 <dd>NetworkX DiGraph object that represents our tree.</dd>
 <dt><strong><code>leaf</code></strong></dt>
 <dd>String that corresponds to a leaf in the tree.</dd>
-<dt><strong><code>G</code></strong></dt>
-<dd>nx.DiGraph: </dd>
-<dt><strong><code>leaf</code></strong></dt>
-<dd>str: </dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>float value corresponding to the cost.</p></div>
@@ -626,8 +610,6 @@ dev_type: str: </li>
     Args:
       G: NetworkX DiGraph object that represents our tree.
       leaf: String that corresponds to a leaf in the tree.
-      G: nx.DiGraph: 
-      leaf: str: 
 
     Returns:
       float value corresponding to the cost.
@@ -652,14 +634,6 @@ dev_type: str: </li>
 <dd>the depth that we are pruning at</dd>
 <dt><strong><code>layers</code></strong></dt>
 <dd>List of strings of possible classification layers that can be added.</dd>
-<dt><strong><code>G</code></strong></dt>
-<dd>nx.DiGraph: </dd>
-<dt><strong><code>leaves_at_depth_d</code></strong></dt>
-<dd>dict: </dd>
-<dt><strong><code>d</code></strong></dt>
-<dd>int: </dd>
-<dt><strong><code>layers</code></strong></dt>
-<dd>List[str]: </dd>
 </dl>
 <p>Returns:</p></div>
 <details class="source">
@@ -674,10 +648,7 @@ dev_type: str: </li>
       leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
       d: the depth that we are pruning at
       layers: List of strings of possible classification layers that can be added.
-      G: nx.DiGraph: 
-      leaves_at_depth_d: dict: 
-      d: int: 
-      layers: List[str]: 
+
 
     Returns:
 
@@ -708,12 +679,6 @@ dev_type: str: </li>
 <dd>Dictonary that keeps track of all the leaves at level d</dd>
 <dt><strong><code>layers</code></strong></dt>
 <dd>List of strings containing embedding layers that can be added as first layer.</dd>
-<dt><strong><code>G</code></strong></dt>
-<dd>nx.DiGraph: </dd>
-<dt><strong><code>leaves_at_depth_d</code></strong></dt>
-<dd>dict: </dd>
-<dt><strong><code>layers</code></strong></dt>
-<dd>List[str]: </dd>
 </dl>
 <p>Returns:</p></div>
 <details class="source">
@@ -727,9 +692,6 @@ dev_type: str: </li>
       G: NetworkX DiGraph object that represents our tree.
       leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
       layers: List of strings containing embedding layers that can be added as first layer.
-      G: nx.DiGraph: 
-      leaves_at_depth_d: dict: 
-      layers: List[str]: 
 
     Returns:
 
@@ -755,14 +717,6 @@ dev_type: str: </li>
 <dd>the depth that we are pruning at</dd>
 <dt><strong><code>prune_rate</code></strong></dt>
 <dd>The percentage of leaves to be removed</dd>
-<dt><strong><code>G</code></strong></dt>
-<dd>nx.DiGraph: </dd>
-<dt><strong><code>leaves_at_depth_d</code></strong></dt>
-<dd>dict: </dd>
-<dt><strong><code>d</code></strong></dt>
-<dd>int: </dd>
-<dt><strong><code>prune_rate</code></strong></dt>
-<dd>float: </dd>
 </dl>
 <p>Returns:</p></div>
 <details class="source">
@@ -777,10 +731,6 @@ dev_type: str: </li>
       leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
       d: the depth that we are pruning at
       prune_rate: The percentage of leaves to be removed
-      G: nx.DiGraph: 
-      leaves_at_depth_d: dict: 
-      d: int: 
-      prune_rate: float: 
 
     Returns:
 
