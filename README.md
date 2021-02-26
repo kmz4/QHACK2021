@@ -1,10 +1,7 @@
 # QOSE (Quantum Optimal Subarchitecture Extraction)
 _pronounciation: "cozy"_ 
 
-![small_circle](https://user-images.githubusercontent.com/32705838/109359257-25feb400-7853-11eb-972e-8b23a1484222.png)
-
-
-#### Contributers:
+#### Contributors:
 * Jelena Mackeprang 
 * Roeland Wiersema
 * Aroosa Ijaz
@@ -28,7 +25,6 @@ For exploring the effects of different embedding methods
 
 For a demonstration of parallelized execution 
 [QOSE: MPI and SV1 parallelization on AWS](demos/QOSE_demo_parallel.ipynb)
-
 
 
 ## Installation instruction 
