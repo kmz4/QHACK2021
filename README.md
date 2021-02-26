@@ -16,6 +16,16 @@ QOSE is a version of OSE (optimal subarchitecture extraction) that is an adaptat
 
 Documentation can be found [here](https://kmz4.github.io/QHACK2021/).
 
+For example notebooks see:
+
+[QOSE: Finding the optimal circuit architecture](demos/QOSE_demo.ipynb)
+
+[QOSE: Different Embeddings](demos/QOSE_different_embeddings.ipynb)
+
+[QOSE: MPI and SV1 parallelization on AWS](demos/QOSE_demo_parallel.ipynb)
+
+
+
 ## Installation instruction 
 
 ```
@@ -29,5 +39,5 @@ python setup.py install
     De Wynter (2020) "An Approximation Algorithm for Optimal Subarchitecture Extraction" [arxiv.org/abs/2010.08512]
     De Wynter and Perry (2020) "Optimal Subarchitecture Extraction for BERT" [arxiv.org/abs/2010.10499]
 
-_this module was developed as part of QHACK 2021_
+this module was developed as part of QHACK 2021_
 
