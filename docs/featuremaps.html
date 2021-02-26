@@ -59,29 +59,44 @@ import pennylane as qml
 
 
 def _entanglerZ(w, wire1, wire2):
+    &#34;&#34;&#34;
+
+    Args:
+      w: 
+      wire1: 
+      wire2: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     qml.CNOT(wires=[wire2, wire1])
     qml.RZ(2 * w, wires=wire1)
     qml.CNOT(wires=[wire2, wire1])
 
 
-def qaoa(weights, x, wires, n_layers=1):
-    &#34;&#34;&#34;
-  1-d Ising-coupling QAOA feature map, according to arXiv1812.11075.
-  Example one layer, 4 wires, 2 inputs:
-
+def qaoa(x, wires, n_layers=1):
+    &#34;&#34;&#34;Ising-coupling QAOA feature map, according to arXiv1812.11075.
+    Example one layer, 4 wires, 2 inputs:
+    
      |0&gt; - R_x(x1) - |^| -------- |_| - R_y(w7)  -
      |0&gt; - R_x(x2) - |_|-|^| ---------- R_y(w8)  -
      |0&gt; - ___H___ ------|_|-|^| ------ R_y(w9)  -
      |0&gt; - ___H___ ----------|_| -|^| - R_y(w10) -
+    
+    After the last layer, another block of R_x(x_i) rotations is applied.
 
-  After the last layer, another block of R_x(x_i) rotations is applied.
+    Args:
+      weights: trainable weights of shape 2*n_layers*n_wires
+      x: input, len(x) is &lt;= len(wires)
+      wires: list of wires on which the feature map acts
+      n_layers: number of repetitions of the first layer (Default value = 1)
 
-  :param weights: trainable weights of shape 2*n_layers*n_wires
-  :param x: input, len(x) is &lt;= len(wires)
-  :param wires: list of wires on which the feature map acts
-  :param n_layers: number of repetitions of the first layer
-  &#34;&#34;&#34;
+    Returns:
+
+    &#34;&#34;&#34;
+
     n_wires = len(wires)
+    weights = pars_qaoa(n_wires, n_layers)
 
     if n_wires == 1:
         n_weights_needed = n_layers
@@ -132,30 +147,38 @@ def qaoa(weights, x, wires, n_layers=1):
             qml.Hadamard(wires=wires[i])
 
 
-def pars_qaoa(n_wires, n_layers=1):
+def pars_qaoa(n_wires, n_layers):
+    &#34;&#34;&#34;Initial weight generator for 1-d qaoa feature map
+
+    Args:
+      n_wires: number of wires
+      n_layers: number of layers
+
+    Returns:
+      array of weights
+
     &#34;&#34;&#34;
-  Initial weight generator for 1-d qaoa feature map
-  :param n_wires: number of wires
-  :param n_layers: number of layers
-  :return: array of weights
-  &#34;&#34;&#34;
     if n_wires == 1:
         return 0.001 * np.ones(n_layers)
     else:
         return 0.001 * np.ones(n_wires * n_layers * 2)
 
 
-
-
-def XXZ(w_zz, w_rot, x, wires, n_layers=1):
+def XXZ(x, wires, n_layers=1):
     &#34;&#34;&#34;
-  :param w_zz: trainable weights for ZZ gates
-  :param w_rot: trainable weights for RX gates
-  :param x: input, len(x) is &lt;= len(wires)
-  :param wires: list of wires on which the feature map acts
-  :param n_layers: number of repetitions of the first layer
-  &#34;&#34;&#34;
+
+    Args:
+      w_zz: trainable weights for ZZ gates
+      w_rot: trainable weights for RX gates
+      x: input, len(x) is &lt;= len(wires)
+      wires: list of wires on which the feature map acts
+      n_layers: number of repetitions of the first layer (Default value = 1)
+
+    Returns:
+
+    &#34;&#34;&#34;
     n_wires = len(wires)
+    w_zz, w_rot = pars_xxz(x, n_wires, n_layers)
 
     if n_wires == 1:
         raise ValueError(&#34;use at least 2 wires to enable entangling gates&#34;)
@@ -192,30 +215,42 @@ def XXZ(w_zz, w_rot, x, wires, n_layers=1):
                 qml.RX(x[i], wires=wires[i])
             # or a Hadamard
             else:
-                qml.RX(w_rot[i-l], wires=wires[i])
+                qml.RX(w_rot[i - l], wires=wires[i])
 
-def pars_xxz(x, n_wires, n_layers=1):
+
+def pars_xxz(x, n_wires, n_layers):
+    &#34;&#34;&#34;Initial weight generator for xxz feature map
+
+    Args:
+      n_wires: number of wires
+      n_layers: number of layers
+      x: 
+
+    Returns:
+      array of weights
+
     &#34;&#34;&#34;
-  Initial weight generator for xxz feature map
-  :param n_wires: number of wires
-  :param n_layers: number of layers
-  :return: array of weights
-  &#34;&#34;&#34;
     w_zz = 0.001 * np.ones(n_wires * n_layers)
-    w_rot = 0.001 * np.ones((n_wires - len(x))*n_layers)
+    w_rot = 0.001 * np.ones((n_wires - len(x)) * n_layers)
     return w_zz, w_rot
 
 
+def aspuru(x, wires, n_layers=1):
+    &#34;&#34;&#34;Circuits ID = 5 in arXiv:1905.10876 paper
 
-def aspuru(weights, x, wires, n_layers=1):
-    &#34;&#34;&#34; Circuits ID = 5 in arXiv:1905.10876 paper
-  :param weights: trainable weights
-  :param x: input, len(x) is &lt;= len(wires)
-  :param wires: list of wires on which the feature map acts
-  :param n_layers: number of repetitions of the first layer
-  &#34;&#34;&#34;
+    Args:
+      weights: trainable weights
+      x: input, len(x) is &lt;= len(wires)
+      wires: list of wires on which the feature map acts
+      n_layers: number of repetitions of the first layer (Default value = 1)
+
+    Returns:
+
+    &#34;&#34;&#34;
     data_size = len(x)
     n_wires = len(wires)
+    weights = pars_aspuru(x, n_wires, n_layers)
+
     weights_each_layer = (n_wires * (n_wires + 3) - 2 * data_size)
     n_weights_needed = weights_each_layer * n_layers
 
@@ -235,7 +270,7 @@ def aspuru(weights, x, wires, n_layers=1):
                 qml.RX(x[i], wires=wires[i])
 
         for i in range(len(x), n_wires):
-            qml.RX(weights[weights_each_layer * l + i -data_size], wires=wires[i])
+            qml.RX(weights[weights_each_layer * l + i - data_size], wires=wires[i])
 
         for i in range(n_wires):
             qml.RZ(weights[weights_each_layer * l + n_wires - data_size + i], wires=wires[i])
@@ -246,7 +281,7 @@ def aspuru(weights, x, wires, n_layers=1):
                     continue
 
                 qml.CRZ(weights[weights_each_layer * l + 2 * n_wires - data_size + i * (n_wires - 1) + j],
-                            wires=[wires[i], wires[j]])
+                        wires=[wires[i], wires[j]])
 
         for i in range(data_size):
             qml.RX(x[i], wires=wires[i])
@@ -259,53 +294,90 @@ def aspuru(weights, x, wires, n_layers=1):
             qml.RZ(weights[weights_each_layer * l + n_wires * (n_wires + 2) - 2 * data_size + i], wires=wires[i])
 
 
-def pars_aspuru(x, n_wires, n_layers=1):
+def pars_aspuru(x, n_wires, n_layers):
+    &#34;&#34;&#34;
+
+    Args:
+      x: 
+      n_wires: 
+      n_layers: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     weights_each_layer = (n_wires * (n_wires + 3) - 2 * len(x))
 
     return 0.001 * np.ones(n_layers * weights_each_layer)
 
-def random_embed(weights, x, wires, n_layers=1):
-  &#34;&#34;&#34; random enbedding circuit
-  :param weights: trainable weights
-  :param x: input, len(x) is &lt;= len(wires)
-  :param wires: list of wires on which the feature map acts
-  :param n_layers: number of repetitions of the first layer
-  &#34;&#34;&#34;
-  n_wires = len(wires)
-  n_weights_needed = n_layers * n_wires
-  gate_set = [qml.RX, qml.RY, qml.RZ]
-  for l in range(n_layers):
-      i=0
-      while i&lt; len(x):
-          gate = np.random.choice(gate_set)
-          gate(x[i], wires=wires[i])
-          i = i+1
-      for i in range(n_wires):
-          gate = np.random.choice(gate_set)
-          gate(weights[l*n_wires+i -n_wires], wires=wires[i])
-      qml.broadcast(qml.CNOT, wires = range(n_wires), pattern = &#34;ring&#34;)
 
-def pars_random(x, n_wires, n_layers=1):
-    weights_each_layer = (n_wires * (n_wires + 3) - 2 * len(x))
+def random_embed(x, wires, n_layers=1):
+    &#34;&#34;&#34;random enbedding circuit
 
-    return 0.001 * np.ones(n_layers * n_wires)
+    Args:
+      weights: trainable weights
+      x: input, len(x) is &lt;= len(wires)
+      wires: list of wires on which the feature map acts
+      n_layers: number of repetitions of the first layer (Default value = 1)
+
+    Returns:
+
+    &#34;&#34;&#34;
+    n_wires = len(wires)
+    weights = pars_random(x, n_wires, n_layers)
+
+    n_weights_needed = n_layers * n_wires
+
+    if len(weights) != n_weights_needed:
+        raise ValueError(&#34;Feat map needs {} weights, got {}.&#34;
+                         .format(n_weights_needed, len(weights)))
+
+    gate_set = [qml.RX, qml.RY, qml.RZ]
+    for l in range(n_layers):
+        i = 0
+        while i &lt; len(x):
+            gate = np.random.choice(gate_set)
+            gate(x[i], wires=wires[i])
+            i = i + 1
+        for i in range(n_wires):
+            gate = np.random.choice(gate_set)
+            gate(weights[l * n_wires + i - n_wires], wires=wires[i])
+        qml.broadcast(qml.CNOT, wires=range(n_wires), pattern=&#34;ring&#34;)
+
+
+def pars_random(x, n_wires, n_layers):
+    &#34;&#34;&#34;
+
+    Args:
+      x: 
+      n_wires: 
+      n_layers: 
+
+    Returns:
+
+    &#34;&#34;&#34;
+    return 0.001 * np.ones(n_wires * n_layers)
+
 
 def get_embedding_info(name, x, n_wires, n_layers):
+    &#34;&#34;&#34;get information about the number of weights, entangling gates, number of gates with
+    input/non-trainable parameters and number of non-parametrized gates (hadamards) in an embedding
+
+    Args:
+      name: name of embedding used
+      x: input, len(x) is &lt;= len(wires)
+      n_wires: number of wires used in the architecture
+      n_layers: number of layers used in the architecture
+
+    Returns:
+
     &#34;&#34;&#34;
-  get information about the number of weights, entangling gates, number of gates with
-  input/non-trainable parameters and number of non-parametrized gates (hadamards) in an embedding
-  :param name: name of embedding used
-  :param x: input, len(x) is &lt;= len(wires)
-  :param n_wires: number of wires used in the architecture
-  :param n_layers: number of layers used in the architecture
-  &#34;&#34;&#34;
     rem = n_wires - len(x)
     if name == &#34;qaoa&#34;:
-        return 2 * n_wires * n_layers, n_wires*n_layers, (n_layers * len(x))+len(x), (n_layers * rem)+rem
+        return 2 * n_wires * n_layers, n_wires * n_layers, (n_layers * len(x)) + len(x), (n_layers * rem) + rem
     if name == &#34;xxz&#34;:
-        return (n_wires + n_wires - len(x)) * n_layers, n_wires*n_layers, len(x) * n_layers, n_wires*n_layers
+        return (n_wires + n_wires - len(x)) * n_layers, n_wires * n_layers, len(x) * n_layers, n_wires * n_layers
     if name == &#34;aspuru&#34;:
-        return n_layers* (n_wires * (n_wires + 3) - 2 * len(x)), (n_wires-1)*n_wires, len(x)*2*n_layers, 0
+        return n_layers * (n_wires * (n_wires + 3) - 2 * len(x)), (n_wires - 1) * n_wires, len(x) * 2 * n_layers, 0
     if name == &#34;angle&#34;:
         return 0, 0, len(x), 0
     if name == &#34;amplitude&#34;:
@@ -322,27 +394,42 @@ def get_embedding_info(name, x, n_wires, n_layers):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="qose.featuremaps.XXZ"><code class="name flex">
-<span>def <span class="ident">XXZ</span></span>(<span>w_zz, w_rot, x, wires, n_layers=1)</span>
+<span>def <span class="ident">XXZ</span></span>(<span>x, wires, n_layers=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param w_zz: trainable weights for ZZ gates
-:param w_rot: trainable weights for RX gates
-:param x: input, len(x) is &lt;= len(wires)
-:param wires: list of wires on which the feature map acts
-:param n_layers: number of repetitions of the first layer</p></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>w_zz</code></strong></dt>
+<dd>trainable weights for ZZ gates</dd>
+<dt><strong><code>w_rot</code></strong></dt>
+<dd>trainable weights for RX gates</dd>
+<dt><strong><code>x</code></strong></dt>
+<dd>input, len(x) is &lt;= len(wires)</dd>
+<dt><strong><code>wires</code></strong></dt>
+<dd>list of wires on which the feature map acts</dd>
+<dt><strong><code>n_layers</code></strong></dt>
+<dd>number of repetitions of the first layer (Default value = 1)</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def XXZ(w_zz, w_rot, x, wires, n_layers=1):
+<pre><code class="python">def XXZ(x, wires, n_layers=1):
     &#34;&#34;&#34;
-  :param w_zz: trainable weights for ZZ gates
-  :param w_rot: trainable weights for RX gates
-  :param x: input, len(x) is &lt;= len(wires)
-  :param wires: list of wires on which the feature map acts
-  :param n_layers: number of repetitions of the first layer
-  &#34;&#34;&#34;
+
+    Args:
+      w_zz: trainable weights for ZZ gates
+      w_rot: trainable weights for RX gates
+      x: input, len(x) is &lt;= len(wires)
+      wires: list of wires on which the feature map acts
+      n_layers: number of repetitions of the first layer (Default value = 1)
+
+    Returns:
+
+    &#34;&#34;&#34;
     n_wires = len(wires)
+    w_zz, w_rot = pars_xxz(x, n_wires, n_layers)
 
     if n_wires == 1:
         raise ValueError(&#34;use at least 2 wires to enable entangling gates&#34;)
@@ -379,31 +466,46 @@ def get_embedding_info(name, x, n_wires, n_layers):
                 qml.RX(x[i], wires=wires[i])
             # or a Hadamard
             else:
-                qml.RX(w_rot[i-l], wires=wires[i])</code></pre>
+                qml.RX(w_rot[i - l], wires=wires[i])</code></pre>
 </details>
 </dd>
 <dt id="qose.featuremaps.aspuru"><code class="name flex">
-<span>def <span class="ident">aspuru</span></span>(<span>weights, x, wires, n_layers=1)</span>
+<span>def <span class="ident">aspuru</span></span>(<span>x, wires, n_layers=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Circuits ID = 5 in arXiv:1905.10876 paper
-:param weights: trainable weights
-:param x: input, len(x) is &lt;= len(wires)
-:param wires: list of wires on which the feature map acts
-:param n_layers: number of repetitions of the first layer</p></div>
+<div class="desc"><p>Circuits ID = 5 in arXiv:1905.10876 paper</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>weights</code></strong></dt>
+<dd>trainable weights</dd>
+<dt><strong><code>x</code></strong></dt>
+<dd>input, len(x) is &lt;= len(wires)</dd>
+<dt><strong><code>wires</code></strong></dt>
+<dd>list of wires on which the feature map acts</dd>
+<dt><strong><code>n_layers</code></strong></dt>
+<dd>number of repetitions of the first layer (Default value = 1)</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def aspuru(weights, x, wires, n_layers=1):
-    &#34;&#34;&#34; Circuits ID = 5 in arXiv:1905.10876 paper
-  :param weights: trainable weights
-  :param x: input, len(x) is &lt;= len(wires)
-  :param wires: list of wires on which the feature map acts
-  :param n_layers: number of repetitions of the first layer
-  &#34;&#34;&#34;
+<pre><code class="python">def aspuru(x, wires, n_layers=1):
+    &#34;&#34;&#34;Circuits ID = 5 in arXiv:1905.10876 paper
+
+    Args:
+      weights: trainable weights
+      x: input, len(x) is &lt;= len(wires)
+      wires: list of wires on which the feature map acts
+      n_layers: number of repetitions of the first layer (Default value = 1)
+
+    Returns:
+
+    &#34;&#34;&#34;
     data_size = len(x)
     n_wires = len(wires)
+    weights = pars_aspuru(x, n_wires, n_layers)
+
     weights_each_layer = (n_wires * (n_wires + 3) - 2 * data_size)
     n_weights_needed = weights_each_layer * n_layers
 
@@ -423,7 +525,7 @@ def get_embedding_info(name, x, n_wires, n_layers):
                 qml.RX(x[i], wires=wires[i])
 
         for i in range(len(x), n_wires):
-            qml.RX(weights[weights_each_layer * l + i -data_size], wires=wires[i])
+            qml.RX(weights[weights_each_layer * l + i - data_size], wires=wires[i])
 
         for i in range(n_wires):
             qml.RZ(weights[weights_each_layer * l + n_wires - data_size + i], wires=wires[i])
@@ -434,7 +536,7 @@ def get_embedding_info(name, x, n_wires, n_layers):
                     continue
 
                 qml.CRZ(weights[weights_each_layer * l + 2 * n_wires - data_size + i * (n_wires - 1) + j],
-                            wires=[wires[i], wires[j]])
+                        wires=[wires[i], wires[j]])
 
         for i in range(data_size):
             qml.RX(x[i], wires=wires[i])
@@ -452,31 +554,43 @@ def get_embedding_info(name, x, n_wires, n_layers):
 </code></dt>
 <dd>
 <div class="desc"><p>get information about the number of weights, entangling gates, number of gates with
-input/non-trainable parameters and number of non-parametrized gates (hadamards) in an embedding
-:param name: name of embedding used
-:param x: input, len(x) is &lt;= len(wires)
-:param n_wires: number of wires used in the architecture
-:param n_layers: number of layers used in the architecture</p></div>
+input/non-trainable parameters and number of non-parametrized gates (hadamards) in an embedding</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>name of embedding used</dd>
+<dt><strong><code>x</code></strong></dt>
+<dd>input, len(x) is &lt;= len(wires)</dd>
+<dt><strong><code>n_wires</code></strong></dt>
+<dd>number of wires used in the architecture</dd>
+<dt><strong><code>n_layers</code></strong></dt>
+<dd>number of layers used in the architecture</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def get_embedding_info(name, x, n_wires, n_layers):
+    &#34;&#34;&#34;get information about the number of weights, entangling gates, number of gates with
+    input/non-trainable parameters and number of non-parametrized gates (hadamards) in an embedding
+
+    Args:
+      name: name of embedding used
+      x: input, len(x) is &lt;= len(wires)
+      n_wires: number of wires used in the architecture
+      n_layers: number of layers used in the architecture
+
+    Returns:
+
     &#34;&#34;&#34;
-  get information about the number of weights, entangling gates, number of gates with
-  input/non-trainable parameters and number of non-parametrized gates (hadamards) in an embedding
-  :param name: name of embedding used
-  :param x: input, len(x) is &lt;= len(wires)
-  :param n_wires: number of wires used in the architecture
-  :param n_layers: number of layers used in the architecture
-  &#34;&#34;&#34;
     rem = n_wires - len(x)
     if name == &#34;qaoa&#34;:
-        return 2 * n_wires * n_layers, n_wires*n_layers, (n_layers * len(x))+len(x), (n_layers * rem)+rem
+        return 2 * n_wires * n_layers, n_wires * n_layers, (n_layers * len(x)) + len(x), (n_layers * rem) + rem
     if name == &#34;xxz&#34;:
-        return (n_wires + n_wires - len(x)) * n_layers, n_wires*n_layers, len(x) * n_layers, n_wires*n_layers
+        return (n_wires + n_wires - len(x)) * n_layers, n_wires * n_layers, len(x) * n_layers, n_wires * n_layers
     if name == &#34;aspuru&#34;:
-        return n_layers* (n_wires * (n_wires + 3) - 2 * len(x)), (n_wires-1)*n_wires, len(x)*2*n_layers, 0
+        return n_layers * (n_wires * (n_wires + 3) - 2 * len(x)), (n_wires - 1) * n_wires, len(x) * 2 * n_layers, 0
     if name == &#34;angle&#34;:
         return 0, 0, len(x), 0
     if name == &#34;amplitude&#34;:
@@ -486,39 +600,68 @@ input/non-trainable parameters and number of non-parametrized gates (hadamards) 
 </details>
 </dd>
 <dt id="qose.featuremaps.pars_aspuru"><code class="name flex">
-<span>def <span class="ident">pars_aspuru</span></span>(<span>x, n_wires, n_layers=1)</span>
+<span>def <span class="ident">pars_aspuru</span></span>(<span>x, n_wires, n_layers)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>x</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>n_wires</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>n_layers</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pars_aspuru(x, n_wires, n_layers=1):
+<pre><code class="python">def pars_aspuru(x, n_wires, n_layers):
+    &#34;&#34;&#34;
+
+    Args:
+      x: 
+      n_wires: 
+      n_layers: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     weights_each_layer = (n_wires * (n_wires + 3) - 2 * len(x))
 
     return 0.001 * np.ones(n_layers * weights_each_layer)</code></pre>
 </details>
 </dd>
 <dt id="qose.featuremaps.pars_qaoa"><code class="name flex">
-<span>def <span class="ident">pars_qaoa</span></span>(<span>n_wires, n_layers=1)</span>
+<span>def <span class="ident">pars_qaoa</span></span>(<span>n_wires, n_layers)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Initial weight generator for 1-d qaoa feature map
-:param n_wires: number of wires
-:param n_layers: number of layers
-:return: array of weights</p></div>
+<div class="desc"><p>Initial weight generator for 1-d qaoa feature map</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>n_wires</code></strong></dt>
+<dd>number of wires</dd>
+<dt><strong><code>n_layers</code></strong></dt>
+<dd>number of layers</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>array of weights</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pars_qaoa(n_wires, n_layers=1):
+<pre><code class="python">def pars_qaoa(n_wires, n_layers):
+    &#34;&#34;&#34;Initial weight generator for 1-d qaoa feature map
+
+    Args:
+      n_wires: number of wires
+      n_layers: number of layers
+
+    Returns:
+      array of weights
+
     &#34;&#34;&#34;
-  Initial weight generator for 1-d qaoa feature map
-  :param n_wires: number of wires
-  :param n_layers: number of layers
-  :return: array of weights
-  &#34;&#34;&#34;
     if n_wires == 1:
         return 0.001 * np.ones(n_layers)
     else:
@@ -526,49 +669,79 @@ input/non-trainable parameters and number of non-parametrized gates (hadamards) 
 </details>
 </dd>
 <dt id="qose.featuremaps.pars_random"><code class="name flex">
-<span>def <span class="ident">pars_random</span></span>(<span>x, n_wires, n_layers=1)</span>
+<span>def <span class="ident">pars_random</span></span>(<span>x, n_wires, n_layers)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>x</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>n_wires</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>n_layers</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pars_random(x, n_wires, n_layers=1):
-    weights_each_layer = (n_wires * (n_wires + 3) - 2 * len(x))
+<pre><code class="python">def pars_random(x, n_wires, n_layers):
+    &#34;&#34;&#34;
 
-    return 0.001 * np.ones(n_layers * n_wires)</code></pre>
+    Args:
+      x: 
+      n_wires: 
+      n_layers: 
+
+    Returns:
+
+    &#34;&#34;&#34;
+    return 0.001 * np.ones(n_wires * n_layers)</code></pre>
 </details>
 </dd>
 <dt id="qose.featuremaps.pars_xxz"><code class="name flex">
-<span>def <span class="ident">pars_xxz</span></span>(<span>x, n_wires, n_layers=1)</span>
+<span>def <span class="ident">pars_xxz</span></span>(<span>x, n_wires, n_layers)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Initial weight generator for xxz feature map
-:param n_wires: number of wires
-:param n_layers: number of layers
-:return: array of weights</p></div>
+<div class="desc"><p>Initial weight generator for xxz feature map</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>n_wires</code></strong></dt>
+<dd>number of wires</dd>
+<dt><strong><code>n_layers</code></strong></dt>
+<dd>number of layers</dd>
+<dt><strong><code>x</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>array of weights</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pars_xxz(x, n_wires, n_layers=1):
+<pre><code class="python">def pars_xxz(x, n_wires, n_layers):
+    &#34;&#34;&#34;Initial weight generator for xxz feature map
+
+    Args:
+      n_wires: number of wires
+      n_layers: number of layers
+      x: 
+
+    Returns:
+      array of weights
+
     &#34;&#34;&#34;
-  Initial weight generator for xxz feature map
-  :param n_wires: number of wires
-  :param n_layers: number of layers
-  :return: array of weights
-  &#34;&#34;&#34;
     w_zz = 0.001 * np.ones(n_wires * n_layers)
-    w_rot = 0.001 * np.ones((n_wires - len(x))*n_layers)
+    w_rot = 0.001 * np.ones((n_wires - len(x)) * n_layers)
     return w_zz, w_rot</code></pre>
 </details>
 </dd>
 <dt id="qose.featuremaps.qaoa"><code class="name flex">
-<span>def <span class="ident">qaoa</span></span>(<span>weights, x, wires, n_layers=1)</span>
+<span>def <span class="ident">qaoa</span></span>(<span>x, wires, n_layers=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>1-d Ising-coupling QAOA feature map, according to arXiv1812.11075.
+<div class="desc"><p>Ising-coupling QAOA feature map, according to arXiv1812.11075.
 Example one layer, 4 wires, 2 inputs:</p>
 <p>|0&gt; - R_x(x1) - |^| -------- |<em>| - R_y(w7)
 -
@@ -578,32 +751,45 @@ Example one layer, 4 wires, 2 inputs:</p>
 -
 |0&gt; - ___H___ ----------|</em>| -|^| - R_y(w10) -</p>
 <p>After the last layer, another block of R_x(x_i) rotations is applied.</p>
-<p>:param weights: trainable weights of shape 2<em>n_layers</em>n_wires
-:param x: input, len(x) is &lt;= len(wires)
-:param wires: list of wires on which the feature map acts
-:param n_layers: number of repetitions of the first layer</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>weights</code></strong></dt>
+<dd>trainable weights of shape 2<em>n_layers</em>n_wires</dd>
+<dt><strong><code>x</code></strong></dt>
+<dd>input, len(x) is &lt;= len(wires)</dd>
+<dt><strong><code>wires</code></strong></dt>
+<dd>list of wires on which the feature map acts</dd>
+<dt><strong><code>n_layers</code></strong></dt>
+<dd>number of repetitions of the first layer (Default value = 1)</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def qaoa(weights, x, wires, n_layers=1):
-    &#34;&#34;&#34;
-  1-d Ising-coupling QAOA feature map, according to arXiv1812.11075.
-  Example one layer, 4 wires, 2 inputs:
-
+<pre><code class="python">def qaoa(x, wires, n_layers=1):
+    &#34;&#34;&#34;Ising-coupling QAOA feature map, according to arXiv1812.11075.
+    Example one layer, 4 wires, 2 inputs:
+    
      |0&gt; - R_x(x1) - |^| -------- |_| - R_y(w7)  -
      |0&gt; - R_x(x2) - |_|-|^| ---------- R_y(w8)  -
      |0&gt; - ___H___ ------|_|-|^| ------ R_y(w9)  -
      |0&gt; - ___H___ ----------|_| -|^| - R_y(w10) -
+    
+    After the last layer, another block of R_x(x_i) rotations is applied.
 
-  After the last layer, another block of R_x(x_i) rotations is applied.
+    Args:
+      weights: trainable weights of shape 2*n_layers*n_wires
+      x: input, len(x) is &lt;= len(wires)
+      wires: list of wires on which the feature map acts
+      n_layers: number of repetitions of the first layer (Default value = 1)
 
-  :param weights: trainable weights of shape 2*n_layers*n_wires
-  :param x: input, len(x) is &lt;= len(wires)
-  :param wires: list of wires on which the feature map acts
-  :param n_layers: number of repetitions of the first layer
-  &#34;&#34;&#34;
+    Returns:
+
+    &#34;&#34;&#34;
+
     n_wires = len(wires)
+    weights = pars_qaoa(n_wires, n_layers)
 
     if n_wires == 1:
         n_weights_needed = n_layers
@@ -655,38 +841,58 @@ Example one layer, 4 wires, 2 inputs:</p>
 </details>
 </dd>
 <dt id="qose.featuremaps.random_embed"><code class="name flex">
-<span>def <span class="ident">random_embed</span></span>(<span>weights, x, wires, n_layers=1)</span>
+<span>def <span class="ident">random_embed</span></span>(<span>x, wires, n_layers=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>random enbedding circuit
-:param weights: trainable weights
-:param x: input, len(x) is &lt;= len(wires)
-:param wires: list of wires on which the feature map acts
-:param n_layers: number of repetitions of the first layer</p></div>
+<div class="desc"><p>random enbedding circuit</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>weights</code></strong></dt>
+<dd>trainable weights</dd>
+<dt><strong><code>x</code></strong></dt>
+<dd>input, len(x) is &lt;= len(wires)</dd>
+<dt><strong><code>wires</code></strong></dt>
+<dd>list of wires on which the feature map acts</dd>
+<dt><strong><code>n_layers</code></strong></dt>
+<dd>number of repetitions of the first layer (Default value = 1)</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def random_embed(weights, x, wires, n_layers=1):
-  &#34;&#34;&#34; random enbedding circuit
-  :param weights: trainable weights
-  :param x: input, len(x) is &lt;= len(wires)
-  :param wires: list of wires on which the feature map acts
-  :param n_layers: number of repetitions of the first layer
-  &#34;&#34;&#34;
-  n_wires = len(wires)
-  n_weights_needed = n_layers * n_wires
-  gate_set = [qml.RX, qml.RY, qml.RZ]
-  for l in range(n_layers):
-      i=0
-      while i&lt; len(x):
-          gate = np.random.choice(gate_set)
-          gate(x[i], wires=wires[i])
-          i = i+1
-      for i in range(n_wires):
-          gate = np.random.choice(gate_set)
-          gate(weights[l*n_wires+i -n_wires], wires=wires[i])
-      qml.broadcast(qml.CNOT, wires = range(n_wires), pattern = &#34;ring&#34;)</code></pre>
+<pre><code class="python">def random_embed(x, wires, n_layers=1):
+    &#34;&#34;&#34;random enbedding circuit
+
+    Args:
+      weights: trainable weights
+      x: input, len(x) is &lt;= len(wires)
+      wires: list of wires on which the feature map acts
+      n_layers: number of repetitions of the first layer (Default value = 1)
+
+    Returns:
+
+    &#34;&#34;&#34;
+    n_wires = len(wires)
+    weights = pars_random(x, n_wires, n_layers)
+
+    n_weights_needed = n_layers * n_wires
+
+    if len(weights) != n_weights_needed:
+        raise ValueError(&#34;Feat map needs {} weights, got {}.&#34;
+                         .format(n_weights_needed, len(weights)))
+
+    gate_set = [qml.RX, qml.RY, qml.RZ]
+    for l in range(n_layers):
+        i = 0
+        while i &lt; len(x):
+            gate = np.random.choice(gate_set)
+            gate(x[i], wires=wires[i])
+            i = i + 1
+        for i in range(n_wires):
+            gate = np.random.choice(gate_set)
+            gate(weights[l * n_wires + i - n_wires], wires=wires[i])
+        qml.broadcast(qml.CNOT, wires=range(n_wires), pattern=&#34;ring&#34;)</code></pre>
 </details>
 </dd>
 </dl>

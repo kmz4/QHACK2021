@@ -4,6 +4,14 @@ from qose.featuremaps import *
 
 
 def cycle_CNOT_layer(wires):
+    """
+
+    Args:
+      wires: 
+
+    Returns:
+
+    """
     nq = len(wires)
     for n in range(nq - 1):
         qml.CNOT(wires=[n, n + 1])
@@ -11,12 +19,29 @@ def cycle_CNOT_layer(wires):
 
 
 def path_CNOT_layer(wires):
+    """
+
+    Args:
+      wires: 
+
+    Returns:
+
+    """
     nq = len(wires)
     for n in range(nq - 1):
         qml.CNOT(wires=[n, n + 1])
 
 
 def zz_layer(wires, params):
+    """
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    """
     nq = len(wires)
     for n in range(nq - 1):
         zz_gate([n, n + 1], params[n])
@@ -24,30 +49,76 @@ def zz_layer(wires, params):
 
 
 def zz_gate(wires, gamma):
+    """
+
+    Args:
+      wires: 
+      gamma: 
+
+    Returns:
+
+    """
     qml.CNOT(wires=wires)
     qml.RZ(gamma, wires=wires[1])
     qml.CNOT(wires=wires)
 
 
 def x_layer(wires, params):
+    """
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    """
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RX(params[n], wires=[n, ])
 
 
 def z_layer(wires, params):
+    """
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    """
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RZ(params[n], wires=[n, ])
 
 
 def y_layer(wires, params):
+    """
+
+    Args:
+      wires: 
+      params: 
+
+    Returns:
+
+    """
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RY(params[n], wires=[n, ])
 
 
 def embedding_1(X, wires, fill='redundant'):
+    """
+
+    Args:
+      X: 
+      wires: 
+      fill:  (Default value = 'redundant')
+
+    Returns:
+
+    """
     if len(X) < len(wires):
         r_ = len(wires) // len(X)
         if fill == 'redundant':
@@ -60,16 +131,29 @@ def embedding_1(X, wires, fill='redundant'):
 
 
 def embedding_2(X, wires):
+    """
+
+    Args:
+      X: 
+      wires: 
+
+    Returns:
+
+    """
     qml.templates.embeddings.AmplitudeEmbedding(X, wires=wires, pad=0, normalize=True)
 
 def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device, config: dict):
-    """
-    Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
-    :param leaf: String that corresponds to a leaf in the tree.
-    :param nqubits: The number of qubits in the circuit.
-    :param nclasses:  The number of classes in the circuit.
-    :param dev: PennyLane Device.
-    :return: QNode corresponding to the circuit.
+    """Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
+
+    Args:
+      leaf: String that corresponds to a leaf in the tree.
+      nqubits: The number of qubits in the circuit.
+      nclasses: The number of classes in the circuit.
+      dev: PennyLane Device.
+
+    Returns:
+      QNode corresponding to the circuit.
+
     """
     architecture = leaf.split(':')
 
@@ -77,6 +161,15 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
     embedding_circuit = architecture.pop(0)
 
     def circuit_from_architecture(params, features):
+        """
+
+        Args:
+          params: 
+          features: 
+
+        Returns:
+
+        """
         # lookup the function in the embedding dict, call with features being passed.
         string_to_embedding_mapping[embedding_circuit](features, dev.wires)
         # for each layer, lookup the function in the layer dict, call with parameters being passed.

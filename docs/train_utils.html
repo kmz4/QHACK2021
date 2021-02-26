@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
 <title>qose.train_utils API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Train utils
+**************************************
+Losses, training loops and helper functions used during training." />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,11 +24,18 @@
 <h1 class="title">Module <code>qose.train_utils</code></h1>
 </header>
 <section id="section-intro">
+<p>Train utils</p>
+<hr>
+<p>Losses, training loops and helper functions used during training.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import pennylane as qml
+<pre><code class="python">&#34;&#34;&#34;
+Train utils
+**************************************
+Losses, training loops and helper functions used during training.
+&#34;&#34;&#34;
 from pennylane import numpy as np
 import autograd.numpy as np
 from autograd.numpy import exp
@@ -35,6 +44,16 @@ import time
 
 
 def hinge_loss(labels, predictions, type=&#39;L2&#39;):
+    &#34;&#34;&#34;
+
+    Args:
+      labels: 
+      predictions: 
+      type:  (Default value = &#39;L2&#39;)
+
+    Returns:
+
+    &#34;&#34;&#34;
     loss = 0
     for l, p in zip(labels, predictions):
         if type == &#39;L1&#39;:
@@ -46,12 +65,30 @@ def hinge_loss(labels, predictions, type=&#39;L2&#39;):
 
 
 def ohe_accuracy(labels, predictions):
+    &#34;&#34;&#34;
+
+    Args:
+      labels: 
+      predictions: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     loss = 0
     for l, p in zip(labels, predictions):
         loss += np.argmax(l) == np.argmax(p)
     return loss / labels.shape[0]
 
 def wn_accuracy(labels, predictions):
+    &#34;&#34;&#34;
+
+    Args:
+      labels: 
+      predictions: 
+
+    Returns:
+
+    &#34;&#34;&#34;
 
     loss = 0
     #tol = 0.05
@@ -64,73 +101,122 @@ def wn_accuracy(labels, predictions):
     return loss
 
 def mse(labels, predictions):
+    &#34;&#34;&#34;
+
+    Args:
+      labels: 
+      predictions: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     # print(labels.shape, predictions.shape)
     loss = 0
     for l, p in zip(labels, predictions):
         loss += np.sum((l - p) ** 2)
     return loss / labels.shape[0]
 
-
-def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learning_rate,**kwargs):
+def make_predictions(circuit,pre_trained_vals,X,Y,**kwargs):
     &#34;&#34;&#34;
-    train a circuit classifier
+
     Args:
-        circuit (qml.QNode): A circuit that you want to train
-        parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
-        the second one is the number of layers in the circuit architecture.
-        X_train (np.ndarray): An array of floats of size (M, n) to be used as training data.
-        Y_train (np.ndarray): An array of size (M,) which are the categorical labels
-            associated to the training data.
-
-        batch_size (int): Batch size for the circuit training.
-
-        learning_rate (float): The learning rate/step size of the optimizer.
-
-        kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
-
-            nsteps (int) : Number of training steps.
-
-            optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
-                Pass as qml.OptimizerName.
-
-            Tmax (list): Maximum point T as defined in https://arxiv.org/abs/2010.08512. (Definition 8)
-                    The first element is the maximum number of parameters among all architectures,
-                    the second is the maximum inference time among all architectures in terms of computing time,
-                    the third one is the maximum inference time among all architectures in terms of the number of CNOTS
-                    in the circuit
-
-            rate_type (string): Determines the type of error rate in the W-coefficient.
-                    If rate_type == &#39;accuracy&#39;, the inference time of the circuit
-                    is equal to the time it takes to evaluate the accuracy of the trained circuit with
-                    respect to a validation batch three times the size of the training batch size and
-                    the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
-
-                    If rate_type == &#39;accuracy&#39;, the inference time of the circuit is equal to the time
-                    it takes to train the circuit (for nsteps training steps) and compute the cost at
-                    each step and the error rate is equal to the cost after nsteps training steps.
-
-
-
-
-
+      circuit: 
+      pre_trained_vals: 
+      X: 
+      Y: 
+      **kwargs: 
 
     Returns:
-        (W_,weights): W-coefficient, trained weights
+
+    &#34;&#34;&#34;
+
+    if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+        var = pre_trained_vals
+
+    elif kwargs[&#39;readout_layer&#39;]==&#34;weighted_neuron&#34;:
+        var = pre_trained_vals
+
+    # make final predictions
+    if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+        final_predictions = np.stack([circuit(var, x) for x in X])
+        acc=ohe_accuracy(Y,predictions)
+
+    elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
+        from autograd.numpy import exp
+        n = kwargs.get(&#39;nqubits&#39;)
+        w = var[:,-1]
+        theta = var[:,:-1].numpy()
+        final_predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1.,1)) for x in X]
+        acc=wn_accuracy(Y,predictions)
+
+    return final_predictions,acc
+
+def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learning_rate,**kwargs):
+    &#34;&#34;&#34;train a circuit classifier
+
+    Args:
+      circuit(qml.QNode): A circuit that you want to train
+      parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+      parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+    the second one is the number of layers in the circuit architecture.
+      X_train(np.ndarray): An array of floats of size (M, n) to be used as training data.
+      Y_train(np.ndarray): An array of size (M,) which are the categorical labels
+    associated to the training data.
+      batch_size(int): Batch size for the circuit training.
+      learning_rate(float): The learning rate/step size of the optimizer.
+      kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
+    nsteps (int) : Number of training steps.
+    optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
+    Pass as qml.OptimizerName.
+    Tmax (list): Maximum point T as defined in https://arxiv.org/abs/2010.08512. (Definition 8)
+    The first element is the maximum number of parameters among all architectures,
+    the second is the maximum inference time among all architectures in terms of computing time,
+    the third one is the maximum inference time among all architectures in terms of the number of CNOTS
+    in the circuit
+    rate_type (string): Determines the type of error rate in the W-coefficient.
+    If rate_type == &#39;accuracy&#39;, the inference time of the circuit
+    is equal to the time it takes to evaluate the accuracy of the trained circuit with
+    respect to a validation batch three times the size of the training batch size and
+    the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
+    If rate_type == &#39;accuracy&#39;, the inference time of the circuit is equal to the time
+    it takes to train the circuit (for nsteps training steps) and compute the cost at
+    each step and the error rate is equal to the cost after nsteps training steps.
+      **kwargs: 
+
+    Returns:
+      W_: W-coefficient, trained weights
+
     &#34;&#34;&#34;
     #print(&#39;batch_size&#39;,batch_size)
     # fix the seed while debugging
     #np.random.seed(1337)
     def ohe_cost_fcn(params, circuit, ang_array, actual):
-        &#39;&#39;&#39;
-        use MAE to start
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;use MAE to start
+
+        Args:
+          params: 
+          circuit: 
+          ang_array: 
+          actual: 
+
+        Returns:
+
+        &#34;&#34;&#34;
         predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
         return mse(actual, predictions)
 
     def wn_cost_fcn(params, circuit, ang_array, actual):
-        &#39;&#39;&#39;
-        use MAE to start
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;use MAE to start
+
+        Args:
+          params: 
+          circuit: 
+          ang_array: 
+          actual: 
+
+        Returns:
+
+        &#34;&#34;&#34;
         w = params[:,-1]
 
         theta = params[:,:-1]
@@ -203,9 +289,18 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
     return W_,var
 
 def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
-    &#34;&#34;&#34;
-    together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
+    &#34;&#34;&#34;together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
     batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists
+
+    Args:
+      circuit: 
+      n_params: 
+      X_train: 
+      Y_train: 
+      **kwargs: 
+
+    Returns:
+
     &#34;&#34;&#34;
     Wmax = 0.0
     batch_sets = kwargs.get(&#39;batch_sizes&#39;)
@@ -216,7 +311,131 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
         if wtemp &gt;= Wmax:
             Wmax = wtemp
             saved_weights = weights
-    return Wmax, saved_weights</code></pre>
+    return Wmax, saved_weights
+
+def train_best(circuit, pre_trained_vals,X_train, Y_train, batch_size, learning_rate,**kwargs):
+    &#34;&#34;&#34;train a circuit classifier
+
+    Args:
+      circuit(qml.QNode): A circuit that you want to train
+      parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+      parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+    the second one is the number of layers in the circuit architecture.
+      X_train(np.ndarray): An array of floats of size (M, n) to be used as training data.
+      Y_train(np.ndarray): An array of size (M,) which are the categorical labels
+    associated to the training data.
+      batch_size(int): Batch size for the circuit training.
+      learning_rate(float): The learning rate/step size of the optimizer.
+      kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
+    nsteps (int) : Number of training steps.
+    optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
+    Pass as qml.OptimizerName.
+    Tmax (list): Maximum point T as defined in https://arxiv.org/abs/2010.08512. (Definition 8)
+    The first element is the maximum number of parameters among all architectures,
+    the second is the maximum inference time among all architectures in terms of computing time,
+    the third one is the maximum inference time among all architectures in terms of the number of CNOTS
+    in the circuit
+    rate_type (string): Determines the type of error rate in the W-coefficient.
+    If rate_type == &#39;accuracy&#39;, the inference time of the circuit
+    is equal to the time it takes to evaluate the accuracy of the trained circuit with
+    respect to a validation batch three times the size of the training batch size and
+    the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
+    If rate_type == &#39;accuracy&#39;, the inference time of the circuit is equal to the time
+    it takes to train the circuit (for nsteps training steps) and compute the cost at
+    each step and the error rate is equal to the cost after nsteps training steps.
+      pre_trained_vals: 
+      **kwargs: 
+
+    Returns:
+      Yprime: final predictions, final accuracy
+
+    &#34;&#34;&#34;
+    from autograd.numpy import exp
+    def ohe_cost_fcn(params, circuit, ang_array, actual):
+        &#34;&#34;&#34;use MAE to start
+
+        Args:
+          params: 
+          circuit: 
+          ang_array: 
+          actual: 
+
+        Returns:
+
+        &#34;&#34;&#34;
+        predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
+        return mse(actual, predictions)
+
+    def wn_cost_fcn(params, circuit, ang_array, actual):
+        &#34;&#34;&#34;use MAE to start
+
+        Args:
+          params: 
+          circuit: 
+          ang_array: 
+          actual: 
+
+        Returns:
+
+        &#34;&#34;&#34;
+        w = params[:,-1]
+
+        theta = params[:,:-1]
+        print(w.shape,w,theta.shape,theta)
+        predictions = np.asarray([2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta,x)))))- 1. for x in ang_array])
+        return mse(actual, predictions)
+
+    if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+        var = pre_trained_vals
+    elif kwargs[&#39;readout_layer&#39;]==&#34;weighted_neuron&#34;:
+        var = pre_trained_vals
+    rate_type = kwargs[&#39;rate_type&#39;]
+    optim = kwargs[&#39;optim&#39;]
+    num_train = len(Y_train)
+    validation_size = int(0.1*num_train)
+    opt = optim(stepsize=learning_rate) #all optimizers in autograd module take in argument stepsize, so this works for all
+
+    for _ in range(kwargs[&#39;nsteps&#39;]):
+        batch_index = np.random.randint(0, num_train, (batch_size,))
+        X_train_batch = np.asarray(X_train[batch_index])
+        Y_train_batch = np.asarray(Y_train[batch_index])
+
+        if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+            var, cost = opt.step_and_cost(lambda v: ohe_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
+        elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
+            print(var)
+            var, cost = opt.step_and_cost(lambda v: wn_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
+        print(_,cost)
+        # check for early stopping
+        if _%5==0:
+            validation_batch = np.random.randint(0, num_train, (validation_size,))
+            X_validation_batch = np.asarray(X_train[validation_batch])
+            Y_validation_batch = np.asarray(Y_train[validation_batch])
+            if kwargs[&#39;rate_type&#39;] == &#39;accuracy&#39;:
+                if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+                    predictions = np.stack([circuit(var, x) for x in X_validation_batch])
+                    acc=ohe_accuracy(Y_validation_batch,predictions)
+                elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
+                    n = kwargs.get(&#39;nqubits&#39;)
+                    w = var[:,-1]
+                    theta = var[:,:-1].numpy()
+                    predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, x)))))- 1.,1)) for x in X_validation_batch]
+                    acc=wn_accuracy(Y_validation_batch,predictions)
+                if acc&gt;0.95:
+                    break
+
+            elif kwargs[&#39;rate_type&#39;] == &#39;batch_cost&#39;:
+                if cost &lt; 0.001:
+                    break
+    # make final predictions
+    if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+        final_predictions = np.stack([circuit(var, x) for x in X_train])
+    elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
+        n = kwargs.get(&#39;nqubits&#39;)
+        w = var[:,-1]
+        theta = var[:,:-1]
+        final_predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, x)))))- 1.,1)) for x in X_train]
+    return var,final_predictions</code></pre>
 </details>
 </section>
 <section>
@@ -231,15 +450,38 @@ def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
 </code></dt>
 <dd>
 <div class="desc"><p>together with the function train_circuit(&hellip;) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
-batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists</p></div>
+batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>circuit</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>n_params</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>X_train</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>Y_train</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def evaluate_w(circuit, n_params, X_train, Y_train, **kwargs):
-    &#34;&#34;&#34;
-    together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
+    &#34;&#34;&#34;together with the function train_circuit(...) this executes lines 7-8 in the Algorithm 1 pseudo code of (de Wynter 2020)
     batch_sets and learning_rates are lists, if just single values needed then pass length-1 lists
+
+    Args:
+      circuit: 
+      n_params: 
+      X_train: 
+      Y_train: 
+      **kwargs: 
+
+    Returns:
+
     &#34;&#34;&#34;
     Wmax = 0.0
     batch_sets = kwargs.get(&#39;batch_sizes&#39;)
@@ -257,12 +499,31 @@ batch_sets and learning_rates are lists, if just single values needed then pass 
 <span>def <span class="ident">hinge_loss</span></span>(<span>labels, predictions, type='L2')</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>labels</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>predictions</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>type</code></strong></dt>
+<dd>(Default value = 'L2')</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def hinge_loss(labels, predictions, type=&#39;L2&#39;):
+    &#34;&#34;&#34;
+
+    Args:
+      labels: 
+      predictions: 
+      type:  (Default value = &#39;L2&#39;)
+
+    Returns:
+
+    &#34;&#34;&#34;
     loss = 0
     for l, p in zip(labels, predictions):
         if type == &#39;L1&#39;:
@@ -273,16 +534,90 @@ batch_sets and learning_rates are lists, if just single values needed then pass 
     return loss</code></pre>
 </details>
 </dd>
+<dt id="qose.train_utils.make_predictions"><code class="name flex">
+<span>def <span class="ident">make_predictions</span></span>(<span>circuit, pre_trained_vals, X, Y, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>circuit</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>pre_trained_vals</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>X</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>Y</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def make_predictions(circuit,pre_trained_vals,X,Y,**kwargs):
+    &#34;&#34;&#34;
+
+    Args:
+      circuit: 
+      pre_trained_vals: 
+      X: 
+      Y: 
+      **kwargs: 
+
+    Returns:
+
+    &#34;&#34;&#34;
+
+    if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+        var = pre_trained_vals
+
+    elif kwargs[&#39;readout_layer&#39;]==&#34;weighted_neuron&#34;:
+        var = pre_trained_vals
+
+    # make final predictions
+    if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+        final_predictions = np.stack([circuit(var, x) for x in X])
+        acc=ohe_accuracy(Y,predictions)
+
+    elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
+        from autograd.numpy import exp
+        n = kwargs.get(&#39;nqubits&#39;)
+        w = var[:,-1]
+        theta = var[:,:-1].numpy()
+        final_predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1.,1)) for x in X]
+        acc=wn_accuracy(Y,predictions)
+
+    return final_predictions,acc</code></pre>
+</details>
+</dd>
 <dt id="qose.train_utils.mse"><code class="name flex">
 <span>def <span class="ident">mse</span></span>(<span>labels, predictions)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>labels</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>predictions</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def mse(labels, predictions):
+    &#34;&#34;&#34;
+
+    Args:
+      labels: 
+      predictions: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     # print(labels.shape, predictions.shape)
     loss = 0
     for l, p in zip(labels, predictions):
@@ -294,16 +629,204 @@ batch_sets and learning_rates are lists, if just single values needed then pass 
 <span>def <span class="ident">ohe_accuracy</span></span>(<span>labels, predictions)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>labels</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>predictions</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def ohe_accuracy(labels, predictions):
+    &#34;&#34;&#34;
+
+    Args:
+      labels: 
+      predictions: 
+
+    Returns:
+
+    &#34;&#34;&#34;
     loss = 0
     for l, p in zip(labels, predictions):
         loss += np.argmax(l) == np.argmax(p)
     return loss / labels.shape[0]</code></pre>
+</details>
+</dd>
+<dt id="qose.train_utils.train_best"><code class="name flex">
+<span>def <span class="ident">train_best</span></span>(<span>circuit, pre_trained_vals, X_train, Y_train, batch_size, learning_rate, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>train a circuit classifier</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt>circuit(qml.QNode): A circuit that you want to train</dt>
+<dt><strong><code>parameter_shape</code></strong></dt>
+<dd>A tuple describing the shape of the parameters. The first entry is the number of qubits,</dd>
+<dt><strong><code>parameter_shape</code></strong></dt>
+<dd>A tuple describing the shape of the parameters. The first entry is the number of qubits,</dd>
+</dl>
+<p>the second one is the number of layers in the circuit architecture.
+X_train(np.ndarray): An array of floats of size (M, n) to be used as training data.
+Y_train(np.ndarray): An array of size (M,) which are the categorical labels
+associated to the training data.
+batch_size(int): Batch size for the circuit training.
+learning_rate(float): The learning rate/step size of the optimizer.
+kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
+nsteps (int) : Number of training steps.
+optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
+Pass as qml.OptimizerName.
+Tmax (list): Maximum point T as defined in <a href="https://arxiv.org/abs/2010.08512.">https://arxiv.org/abs/2010.08512.</a> (Definition 8)
+The first element is the maximum number of parameters among all architectures,
+the second is the maximum inference time among all architectures in terms of computing time,
+the third one is the maximum inference time among all architectures in terms of the number of CNOTS
+in the circuit
+rate_type (string): Determines the type of error rate in the W-coefficient.
+If rate_type == 'accuracy', the inference time of the circuit
+is equal to the time it takes to evaluate the accuracy of the trained circuit with
+respect to a validation batch three times the size of the training batch size and
+the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
+If rate_type == 'accuracy', the inference time of the circuit is equal to the time
+it takes to train the circuit (for nsteps training steps) and compute the cost at
+each step and the error rate is equal to the cost after nsteps training steps.
+pre_trained_vals:
+**kwargs: </p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Yprime</code></dt>
+<dd>final predictions, final accuracy</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def train_best(circuit, pre_trained_vals,X_train, Y_train, batch_size, learning_rate,**kwargs):
+    &#34;&#34;&#34;train a circuit classifier
+
+    Args:
+      circuit(qml.QNode): A circuit that you want to train
+      parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+      parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+    the second one is the number of layers in the circuit architecture.
+      X_train(np.ndarray): An array of floats of size (M, n) to be used as training data.
+      Y_train(np.ndarray): An array of size (M,) which are the categorical labels
+    associated to the training data.
+      batch_size(int): Batch size for the circuit training.
+      learning_rate(float): The learning rate/step size of the optimizer.
+      kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
+    nsteps (int) : Number of training steps.
+    optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
+    Pass as qml.OptimizerName.
+    Tmax (list): Maximum point T as defined in https://arxiv.org/abs/2010.08512. (Definition 8)
+    The first element is the maximum number of parameters among all architectures,
+    the second is the maximum inference time among all architectures in terms of computing time,
+    the third one is the maximum inference time among all architectures in terms of the number of CNOTS
+    in the circuit
+    rate_type (string): Determines the type of error rate in the W-coefficient.
+    If rate_type == &#39;accuracy&#39;, the inference time of the circuit
+    is equal to the time it takes to evaluate the accuracy of the trained circuit with
+    respect to a validation batch three times the size of the training batch size and
+    the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
+    If rate_type == &#39;accuracy&#39;, the inference time of the circuit is equal to the time
+    it takes to train the circuit (for nsteps training steps) and compute the cost at
+    each step and the error rate is equal to the cost after nsteps training steps.
+      pre_trained_vals: 
+      **kwargs: 
+
+    Returns:
+      Yprime: final predictions, final accuracy
+
+    &#34;&#34;&#34;
+    from autograd.numpy import exp
+    def ohe_cost_fcn(params, circuit, ang_array, actual):
+        &#34;&#34;&#34;use MAE to start
+
+        Args:
+          params: 
+          circuit: 
+          ang_array: 
+          actual: 
+
+        Returns:
+
+        &#34;&#34;&#34;
+        predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
+        return mse(actual, predictions)
+
+    def wn_cost_fcn(params, circuit, ang_array, actual):
+        &#34;&#34;&#34;use MAE to start
+
+        Args:
+          params: 
+          circuit: 
+          ang_array: 
+          actual: 
+
+        Returns:
+
+        &#34;&#34;&#34;
+        w = params[:,-1]
+
+        theta = params[:,:-1]
+        print(w.shape,w,theta.shape,theta)
+        predictions = np.asarray([2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta,x)))))- 1. for x in ang_array])
+        return mse(actual, predictions)
+
+    if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+        var = pre_trained_vals
+    elif kwargs[&#39;readout_layer&#39;]==&#34;weighted_neuron&#34;:
+        var = pre_trained_vals
+    rate_type = kwargs[&#39;rate_type&#39;]
+    optim = kwargs[&#39;optim&#39;]
+    num_train = len(Y_train)
+    validation_size = int(0.1*num_train)
+    opt = optim(stepsize=learning_rate) #all optimizers in autograd module take in argument stepsize, so this works for all
+
+    for _ in range(kwargs[&#39;nsteps&#39;]):
+        batch_index = np.random.randint(0, num_train, (batch_size,))
+        X_train_batch = np.asarray(X_train[batch_index])
+        Y_train_batch = np.asarray(Y_train[batch_index])
+
+        if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+            var, cost = opt.step_and_cost(lambda v: ohe_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
+        elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
+            print(var)
+            var, cost = opt.step_and_cost(lambda v: wn_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
+        print(_,cost)
+        # check for early stopping
+        if _%5==0:
+            validation_batch = np.random.randint(0, num_train, (validation_size,))
+            X_validation_batch = np.asarray(X_train[validation_batch])
+            Y_validation_batch = np.asarray(Y_train[validation_batch])
+            if kwargs[&#39;rate_type&#39;] == &#39;accuracy&#39;:
+                if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+                    predictions = np.stack([circuit(var, x) for x in X_validation_batch])
+                    acc=ohe_accuracy(Y_validation_batch,predictions)
+                elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
+                    n = kwargs.get(&#39;nqubits&#39;)
+                    w = var[:,-1]
+                    theta = var[:,:-1].numpy()
+                    predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, x)))))- 1.,1)) for x in X_validation_batch]
+                    acc=wn_accuracy(Y_validation_batch,predictions)
+                if acc&gt;0.95:
+                    break
+
+            elif kwargs[&#39;rate_type&#39;] == &#39;batch_cost&#39;:
+                if cost &lt; 0.001:
+                    break
+    # make final predictions
+    if kwargs[&#39;readout_layer&#39;]==&#39;one_hot&#39;:
+        final_predictions = np.stack([circuit(var, x) for x in X_train])
+    elif kwargs[&#39;readout_layer&#39;]==&#39;weighted_neuron&#39;:
+        n = kwargs.get(&#39;nqubits&#39;)
+        w = var[:,-1]
+        theta = var[:,:-1]
+        final_predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, x)))))- 1.,1)) for x in X_train]
+    return var,final_predictions</code></pre>
 </details>
 </dd>
 <dt id="qose.train_utils.train_circuit"><code class="name flex">
@@ -313,108 +836,111 @@ batch_sets and learning_rates are lists, if just single values needed then pass 
 <div class="desc"><p>train a circuit classifier</p>
 <h2 id="args">Args</h2>
 <dl>
-<dt><strong><code>circuit</code></strong> :&ensp;<code>qml.QNode</code></dt>
-<dd>A circuit that you want to train</dd>
+<dt>circuit(qml.QNode): A circuit that you want to train</dt>
 <dt><strong><code>parameter_shape</code></strong></dt>
 <dd>A tuple describing the shape of the parameters. The first entry is the number of qubits,</dd>
-<dt>the second one is the number of layers in the circuit architecture.</dt>
-<dt><strong><code>X_train</code></strong> :&ensp;<code>np.ndarray</code></dt>
-<dd>An array of floats of size (M, n) to be used as training data.</dd>
-<dt><strong><code>Y_train</code></strong> :&ensp;<code>np.ndarray</code></dt>
-<dd>An array of size (M,) which are the categorical labels
-associated to the training data.</dd>
-<dt><strong><code>batch_size</code></strong> :&ensp;<code>int</code></dt>
-<dd>Batch size for the circuit training.</dd>
-<dt><strong><code>learning_rate</code></strong> :&ensp;<code>float</code></dt>
-<dd>The learning rate/step size of the optimizer.</dd>
-<dt><strong><code>kwargs</code></strong></dt>
-<dd>
-<p>Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:</p>
-<p>nsteps (int) : Number of training steps.</p>
-<p>optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
-Pass as qml.OptimizerName.</p>
-<p>Tmax (list): Maximum point T as defined in <a href="https://arxiv.org/abs/2010.08512.">https://arxiv.org/abs/2010.08512.</a> (Definition 8)
+<dt><strong><code>parameter_shape</code></strong></dt>
+<dd>A tuple describing the shape of the parameters. The first entry is the number of qubits,</dd>
+</dl>
+<p>the second one is the number of layers in the circuit architecture.
+X_train(np.ndarray): An array of floats of size (M, n) to be used as training data.
+Y_train(np.ndarray): An array of size (M,) which are the categorical labels
+associated to the training data.
+batch_size(int): Batch size for the circuit training.
+learning_rate(float): The learning rate/step size of the optimizer.
+kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
+nsteps (int) : Number of training steps.
+optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
+Pass as qml.OptimizerName.
+Tmax (list): Maximum point T as defined in <a href="https://arxiv.org/abs/2010.08512.">https://arxiv.org/abs/2010.08512.</a> (Definition 8)
 The first element is the maximum number of parameters among all architectures,
 the second is the maximum inference time among all architectures in terms of computing time,
 the third one is the maximum inference time among all architectures in terms of the number of CNOTS
-in the circuit</p>
-<p>rate_type (string): Determines the type of error rate in the W-coefficient.
+in the circuit
+rate_type (string): Determines the type of error rate in the W-coefficient.
 If rate_type == 'accuracy', the inference time of the circuit
 is equal to the time it takes to evaluate the accuracy of the trained circuit with
 respect to a validation batch three times the size of the training batch size and
-the error rate is equal to 1-accuracy (w.r.t. to a validation batch).</p>
-<pre><code>    If rate_type == 'accuracy', the inference time of the circuit is equal to the time
-    it takes to train the circuit (for nsteps training steps) and compute the cost at
-    each step and the error rate is equal to the cost after nsteps training steps.
-</code></pre>
-</dd>
-</dl>
+the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
+If rate_type == 'accuracy', the inference time of the circuit is equal to the time
+it takes to train the circuit (for nsteps training steps) and compute the cost at
+each step and the error rate is equal to the cost after nsteps training steps.
+**kwargs: </p>
 <h2 id="returns">Returns</h2>
-<p>(W_,weights): W-coefficient, trained weights</p></div>
+<dl>
+<dt><code>W_</code></dt>
+<dd>W-coefficient, trained weights</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learning_rate,**kwargs):
-    &#34;&#34;&#34;
-    train a circuit classifier
+    &#34;&#34;&#34;train a circuit classifier
+
     Args:
-        circuit (qml.QNode): A circuit that you want to train
-        parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
-        the second one is the number of layers in the circuit architecture.
-        X_train (np.ndarray): An array of floats of size (M, n) to be used as training data.
-        Y_train (np.ndarray): An array of size (M,) which are the categorical labels
-            associated to the training data.
-
-        batch_size (int): Batch size for the circuit training.
-
-        learning_rate (float): The learning rate/step size of the optimizer.
-
-        kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
-
-            nsteps (int) : Number of training steps.
-
-            optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
-                Pass as qml.OptimizerName.
-
-            Tmax (list): Maximum point T as defined in https://arxiv.org/abs/2010.08512. (Definition 8)
-                    The first element is the maximum number of parameters among all architectures,
-                    the second is the maximum inference time among all architectures in terms of computing time,
-                    the third one is the maximum inference time among all architectures in terms of the number of CNOTS
-                    in the circuit
-
-            rate_type (string): Determines the type of error rate in the W-coefficient.
-                    If rate_type == &#39;accuracy&#39;, the inference time of the circuit
-                    is equal to the time it takes to evaluate the accuracy of the trained circuit with
-                    respect to a validation batch three times the size of the training batch size and
-                    the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
-
-                    If rate_type == &#39;accuracy&#39;, the inference time of the circuit is equal to the time
-                    it takes to train the circuit (for nsteps training steps) and compute the cost at
-                    each step and the error rate is equal to the cost after nsteps training steps.
-
-
-
-
-
+      circuit(qml.QNode): A circuit that you want to train
+      parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+      parameter_shape: A tuple describing the shape of the parameters. The first entry is the number of qubits,
+    the second one is the number of layers in the circuit architecture.
+      X_train(np.ndarray): An array of floats of size (M, n) to be used as training data.
+      Y_train(np.ndarray): An array of size (M,) which are the categorical labels
+    associated to the training data.
+      batch_size(int): Batch size for the circuit training.
+      learning_rate(float): The learning rate/step size of the optimizer.
+      kwargs: Hyperparameters for the training (passed as keyword arguments). There are the following hyperparameters:
+    nsteps (int) : Number of training steps.
+    optim (pennylane.optimize instance): Optimizer used during the training of the circuit.
+    Pass as qml.OptimizerName.
+    Tmax (list): Maximum point T as defined in https://arxiv.org/abs/2010.08512. (Definition 8)
+    The first element is the maximum number of parameters among all architectures,
+    the second is the maximum inference time among all architectures in terms of computing time,
+    the third one is the maximum inference time among all architectures in terms of the number of CNOTS
+    in the circuit
+    rate_type (string): Determines the type of error rate in the W-coefficient.
+    If rate_type == &#39;accuracy&#39;, the inference time of the circuit
+    is equal to the time it takes to evaluate the accuracy of the trained circuit with
+    respect to a validation batch three times the size of the training batch size and
+    the error rate is equal to 1-accuracy (w.r.t. to a validation batch).
+    If rate_type == &#39;accuracy&#39;, the inference time of the circuit is equal to the time
+    it takes to train the circuit (for nsteps training steps) and compute the cost at
+    each step and the error rate is equal to the cost after nsteps training steps.
+      **kwargs: 
 
     Returns:
-        (W_,weights): W-coefficient, trained weights
+      W_: W-coefficient, trained weights
+
     &#34;&#34;&#34;
     #print(&#39;batch_size&#39;,batch_size)
     # fix the seed while debugging
     #np.random.seed(1337)
     def ohe_cost_fcn(params, circuit, ang_array, actual):
-        &#39;&#39;&#39;
-        use MAE to start
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;use MAE to start
+
+        Args:
+          params: 
+          circuit: 
+          ang_array: 
+          actual: 
+
+        Returns:
+
+        &#34;&#34;&#34;
         predictions = (np.stack([circuit(params, x) for x in ang_array]) + 1) * 0.5
         return mse(actual, predictions)
 
     def wn_cost_fcn(params, circuit, ang_array, actual):
-        &#39;&#39;&#39;
-        use MAE to start
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;use MAE to start
+
+        Args:
+          params: 
+          circuit: 
+          ang_array: 
+          actual: 
+
+        Returns:
+
+        &#34;&#34;&#34;
         w = params[:,-1]
 
         theta = params[:,:-1]
@@ -491,12 +1017,28 @@ the error rate is equal to 1-accuracy (w.r.t. to a validation batch).</p>
 <span>def <span class="ident">wn_accuracy</span></span>(<span>labels, predictions)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>labels</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>predictions</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>Returns:</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def wn_accuracy(labels, predictions):
+    &#34;&#34;&#34;
+
+    Args:
+      labels: 
+      predictions: 
+
+    Returns:
+
+    &#34;&#34;&#34;
 
     loss = 0
     #tol = 0.05
@@ -529,8 +1071,10 @@ the error rate is equal to 1-accuracy (w.r.t. to a validation batch).</p>
 <ul class="two-column">
 <li><code><a title="qose.train_utils.evaluate_w" href="#qose.train_utils.evaluate_w">evaluate_w</a></code></li>
 <li><code><a title="qose.train_utils.hinge_loss" href="#qose.train_utils.hinge_loss">hinge_loss</a></code></li>
+<li><code><a title="qose.train_utils.make_predictions" href="#qose.train_utils.make_predictions">make_predictions</a></code></li>
 <li><code><a title="qose.train_utils.mse" href="#qose.train_utils.mse">mse</a></code></li>
 <li><code><a title="qose.train_utils.ohe_accuracy" href="#qose.train_utils.ohe_accuracy">ohe_accuracy</a></code></li>
+<li><code><a title="qose.train_utils.train_best" href="#qose.train_utils.train_best">train_best</a></code></li>
 <li><code><a title="qose.train_utils.train_circuit" href="#qose.train_utils.train_circuit">train_circuit</a></code></li>
 <li><code><a title="qose.train_utils.wn_accuracy" href="#qose.train_utils.wn_accuracy">wn_accuracy</a></code></li>
 </ul>

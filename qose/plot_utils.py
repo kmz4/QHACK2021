@@ -1,9 +1,23 @@
+"""
+Plot utils
+************
+Code to plot the search tree.
+"""
 import matplotlib.pyplot as plt
 import networkx as nx
 
 from networkx.drawing.nx_agraph import graphviz_layout
 
 def plot_tree(G, **kwargs):
+    """
+
+    Args:
+      G: 
+      **kwargs: 
+
+    Returns:
+
+    """
     labels = kwargs.pop('labels', True)
     fig, axs = plt.subplots(1, 1)
     fig.set_size_inches(16, 8)
