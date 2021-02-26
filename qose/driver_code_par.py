@@ -11,8 +11,6 @@ import pennylane as qml
 import os
 import pickle
 
-
-
 if __name__ == "__main__":
     # Create a unique name for your experiment
     EXPERIMENT_NAME = 'alpha'
@@ -27,6 +25,7 @@ if __name__ == "__main__":
 
     # Create a configuration file for the tree prune algorithm
     config = {'nqubits': 3,
+              'embedding': 'E1',
               'min_tree_depth': 4,
               'max_tree_depth': 10,
               'prune_rate': 0.15,

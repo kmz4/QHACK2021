@@ -14,7 +14,7 @@ from sklearn import datasets
 from typing import List
 import operator
 from qose.circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
-from qose.train_utils import evaluate_w
+
 from qose.plot_utils import plot_tree
 
 from mpi4py import MPI
@@ -182,12 +182,11 @@ def train_all_leaves_parallel(G, leaves_at_depth_d, d, config):
     for leaves_chunked in chunks(leaves_at_depth_d[d], config['nprocesses']):
         print(f'Sending chunks: {leaves_chunked}')
         comm = MPI.COMM_SELF.Spawn(sys.executable,
-                                   args=['scripts/mpi_evaluate_w.py'],
+                                   args=['mpi_evaluate_w.py'],
                                    maxprocs=len(leaves_chunked))
         #         comm.bcast([i for i in range(len(leaves_chunked))])
         #         N = np.array(list(range(50)), 'i')
         comm.bcast([leaves_chunked, config['save_path'] + '/MPI_data.pickle'], root=MPI.ROOT)
-        print('done')
         #         comm.scatter(list(zip(leaves_chunked, [config['save_path'] + '/MPI_data.pickle' for _ in
         #                                                range(len(leaves_chunked))])), root=MPI.ROOT)
         # comm.scatter(config['save_path'], root=MPI.ROOT)
