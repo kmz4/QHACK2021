@@ -169,14 +169,16 @@ def chunks(lst, n):
 
 def train_all_leaves_parallel(G, leaves_at_depth_d, d, config):
     """
+    Function that handles training leaves in parallel through MPI
 
     Args:
-      G: 
-      leaves_at_depth_d: 
-      d: 
-      config: 
+      G: nx.Digraph object containing the tree
+      leaves_at_depth_d: dictionary with key `depth` and values a list of possible architectures in the form of strings.
+      d: current depth
+      config: configuration file
 
     Returns:
+
 
     """
     for leaves_chunked in chunks(leaves_at_depth_d[d], config['nprocesses']):
@@ -184,12 +186,8 @@ def train_all_leaves_parallel(G, leaves_at_depth_d, d, config):
         comm = MPI.COMM_SELF.Spawn(sys.executable,
                                    args=['mpi_evaluate_w.py'],
                                    maxprocs=len(leaves_chunked))
-        #         comm.bcast([i for i in range(len(leaves_chunked))])
-        #         N = np.array(list(range(50)), 'i')
+
         comm.bcast([leaves_chunked, config['save_path'] + '/MPI_data.pickle'], root=MPI.ROOT)
-        #         comm.scatter(list(zip(leaves_chunked, [config['save_path'] + '/MPI_data.pickle' for _ in
-        #                                                range(len(leaves_chunked))])), root=MPI.ROOT)
-        # comm.scatter(config['save_path'], root=MPI.ROOT)
         w_cost_sent = None
         w_cost_received = comm.gather(w_cost_sent, root=MPI.ROOT)
         comm.Disconnect()
