@@ -136,12 +136,12 @@ def train_all_leaves_parallel(G, leaves_at_depth_d, d, config):
         comm = MPI.COMM_SELF.Spawn(sys.executable,
                                    args=['mpi_evaluate_w.py'],
                                    maxprocs=len(leaves_chunked))
-#         comm.bcast([i for i in range(len(leaves_chunked))])
-#         N = np.array(list(range(50)), 'i')
-        comm.bcast([leaves_chunked, config['save_path']+ '/MPI_data.pickle'], root=MPI.ROOT)
+        #         comm.bcast([i for i in range(len(leaves_chunked))])
+        #         N = np.array(list(range(50)), 'i')
+        comm.bcast([leaves_chunked, config['save_path'] + '/MPI_data.pickle'], root=MPI.ROOT)
         print('done')
-#         comm.scatter(list(zip(leaves_chunked, [config['save_path'] + '/MPI_data.pickle' for _ in
-#                                                range(len(leaves_chunked))])), root=MPI.ROOT)
+        #         comm.scatter(list(zip(leaves_chunked, [config['save_path'] + '/MPI_data.pickle' for _ in
+        #                                                range(len(leaves_chunked))])), root=MPI.ROOT)
         # comm.scatter(config['save_path'], root=MPI.ROOT)
         w_cost_sent = None
         w_cost_received = comm.gather(w_cost_sent, root=MPI.ROOT)
@@ -153,8 +153,7 @@ def train_all_leaves_parallel(G, leaves_at_depth_d, d, config):
                 G.nodes[leaf][kdx] = attrs[kdx]
 
 
-
-def run_tree_architecture_search(config: dict):
+def run_tree_architecture_search(config: dict, dev_type: str):
     """
     The main workhorse for running the algorithm
 
@@ -181,7 +180,17 @@ def run_tree_architecture_search(config: dict):
     # Parse configuration parameters.
     NQUBITS = config['nqubits']
     NSAMPLES = config['n_samples']
-    dev = qml.device("default.qubit.autograd", wires=NQUBITS)
+    PATH = config['save_path']
+    if dev_type == "local":
+        dev = qml.device("default.qubit.autograd", wires=NQUBITS)
+    elif dev_type == "remote":
+        my_bucket = "amazon-braket-0fc49b964f85"  # the name of the bucket
+        my_prefix = PATH.split('/')[1]  # name of the folder in the bucket is the same as experiment name
+        s3_folder = (my_bucket, my_prefix)
+        device_arn = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
+        dev = qml.device("braket.aws.qubit", device_arn=device_arn, wires=NQUBITS, s3_destination_folder=s3_folder,
+                         parallel=True, max_parallel=10, poll_timeout_seconds=30)
+
     MIN_TREE_DEPTH = config['min_tree_depth']
     MAX_TREE_DEPTH = config['max_tree_depth']
     SAVE_FREQUENCY = config['save_frequency']
@@ -294,4 +303,3 @@ def run_tree_architecture_search(config: dict):
     print('weights: ', G.nodes[best_arch]['weights'])
     import pandas as pd
     pd.DataFrame.from_dict(nx.get_node_attributes(G, 'W'), orient='index').to_csv('tree_weights.csv')
-

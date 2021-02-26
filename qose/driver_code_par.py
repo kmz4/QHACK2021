@@ -26,19 +26,19 @@ if __name__ == "__main__":
               'data_set': 'moons',
               'nsteps': 2,
               'optim': qml.AdamOptimizer,
-              'batch_sizes': [8,16,32,64],
+              'batch_sizes': [8, 16, 32, 64],
               'n_samples': 1500,
-              'learning_rates': [0.001,0.005,0.01],
+              'learning_rates': [0.001, 0.005, 0.01],
               'save_frequency': 1,
               'save_path': data_path,
               'nprocesses': 50,
               'save_timing': False,
-              'circuit_type':'schuld',
-              'Tmax': [100,100,100],
-              'inf_time':'numcnots',
-              'fill':'redundant', # or 'pad'
-              'rate_type': 'accuracy', # or 'batch_cost'
-              'readout_layer': 'one_hot',  #or 'weighted_neuron'
+              'circuit_type': 'schuld',
+              'Tmax': [100, 100, 100],
+              'inf_time': 'numcnots',
+              'fill': 'redundant',  # or 'pad'
+              'rate_type': 'accuracy',  # or 'batch_cost'
+              'readout_layer': 'one_hot',  # or 'weighted_neuron'
               }
 
     # Save the configuration file so that we can remember what we did
@@ -46,5 +46,4 @@ if __name__ == "__main__":
         pickle.dump(config, f)
 
     # Execute the algorithm
-    run_tree_architecture_search(config)
-
+    run_tree_architecture_search(config, 'local')
