@@ -3,7 +3,7 @@ _pronounciation: "cozy"_
 
 #### Contributers:
 * Jelena Mackeprang 
-* Roland Wiersema
+* Roeland Wiersema
 * Aroosa Ijaz
 * Kathleen Hamilton
 * Yash Chitgopekar
@@ -13,6 +13,8 @@ Determining the optimal quantum circuit structure for a parameterized model that
 Since running exponentially large circuits are liable to run into barren plateau problems, there is a need for fast searching over circuit structures coupled with intialization choices.
 
 QOSE is a version of OSE (optimal subarchitecture extraction) that is an adaptation of the FPTAS algorithm introduced in arxiv.org/abs/2010.08512 for parameterized quantum circuits and written using PennyLane. 
+
+Documentation can be found [https://kmz4.github.io/QHACK2021/](here)
 
 ## Installation instruction 
 
