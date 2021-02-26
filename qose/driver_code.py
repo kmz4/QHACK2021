@@ -1,4 +1,4 @@
-from subarchitecture_tree_search import run_tree_architecture_search
+from qose.subarchitecture_tree_search import run_tree_architecture_search
 import pennylane as qml
 
 import os

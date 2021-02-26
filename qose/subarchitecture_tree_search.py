@@ -6,9 +6,9 @@ import networkx as nx
 from sklearn import datasets
 from typing import List
 import operator
-from circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
-from train_utils import train_circuit,evaluate_w
-from plot_utils import plot_tree
+from qose.circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
+from qose.train_utils import train_circuit,evaluate_w
+from qose.plot_utils import plot_tree
 
 
 def tree_prune(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, prune_rate: float):

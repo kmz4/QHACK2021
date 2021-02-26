@@ -151,7 +151,7 @@ def XXZ(w_zz, w_rot, x, wires, n_layers=1):
             else:
                 qml.RX(w_rot[i-l], wires=wires[i])
 
-def pars_xxz(n_wires, n_layers=1):
+def pars_xxz(x, n_wires, n_layers=1):
     """
   Initial weight generator for xxz feature map
   :param n_wires: number of wires
@@ -187,7 +187,7 @@ def aspuru(weights, x, wires, n_layers=1):
     for l in range(n_layers):
 
         # inputs
-        for i in range(data_size)
+        for i in range(data_size):
             if i < len(x):
                 qml.RX(x[i], wires=wires[i])
 
@@ -221,13 +221,14 @@ def pars_aspuru(x, n_wires, n_layers=1):
 
     return 0.001 * np.ones(n_layers * weights_each_layer)
 
-def random_embed(weights, x, n_wires, n_layers=1):
+def random_embed(weights, x, wires, n_layers=1):
   """ random enbedding circuit
   :param weights: trainable weights
   :param x: input, len(x) is <= len(wires)
   :param wires: list of wires on which the feature map acts
   :param n_layers: number of repetitions of the first layer
   """
+  n_wires = len(wires)
   n_weights_needed = n_layers * n_wires
   gate_set = [qml.RX, qml.RY, qml.RZ]
   for l in range(n_layers):
