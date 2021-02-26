@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
 <title>qose.driver_code_par API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Driver code par
+***************
+This script launches the tree search with a given configuration. We use MPI4Py to parallelize calculating the
+…" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,15 +25,29 @@
 <h1 class="title">Module <code>qose.driver_code_par</code></h1>
 </header>
 <section id="section-intro">
+<p>Driver code par</p>
+<hr>
+<p>This script launches the tree search with a given configuration. We use MPI4Py to parallelize calculating the circuits
+at the leaves of the tree. Can be launched from the command line
+with <code>mpiexec -n 1 --oversubscribe python driver_code_par.py</code>.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from qose.subarchitecture_tree_search_par import run_tree_architecture_search
+<pre><code class="python">&#34;&#34;&#34;
+Driver code par
+***************
+This script launches the tree search with a given configuration. We use MPI4Py to parallelize calculating the circuits
+ at the leaves of the tree. Can be launched from the command line
+with `mpiexec -n 1 --oversubscribe python driver_code_par.py`.
+&#34;&#34;&#34;
+from qose.subarchitecture_tree_search_par import run_tree_architecture_search
 import pennylane as qml
 
 import os
 import pickle
+
+
 
 if __name__ == &#34;__main__&#34;:
     # Create a unique name for your experiment
