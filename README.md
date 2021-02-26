@@ -16,12 +16,14 @@ QOSE is a version of OSE (optimal subarchitecture extraction) that is an adaptat
 
 Documentation can be found [here](https://kmz4.github.io/QHACK2021/).
 
-For example notebooks see:
-
+### Example notebooks:
+For basic functionality of QOSE
 [QOSE: Finding the optimal circuit architecture](demos/QOSE_demo.ipynb)
 
+For exploring the effects of different embedding methods
 [QOSE: Different Embeddings](demos/QOSE_different_embeddings.ipynb)
 
+For a demonstration of parallelized execution 
 [QOSE: MPI and SV1 parallelization on AWS](demos/QOSE_demo_parallel.ipynb)
 
 
