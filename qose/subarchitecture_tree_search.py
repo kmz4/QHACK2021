@@ -5,10 +5,10 @@ import networkx as nx
 
 from sklearn import datasets
 from typing import List
-
-from circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
-from train_utils import train_circuit
-from plot_utils import plot_tree
+import operator
+from qose.circuit_utils import string_to_layer_mapping, string_to_embedding_mapping
+from qose.train_utils import train_circuit, evaluate_w
+from qose.plot_utils import plot_tree
 
 
 def tree_prune(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, prune_rate: float):
@@ -84,7 +84,7 @@ def tree_cost_of_path(G: nx.DiGraph, leaf: str) -> float:
     return sum([G.nodes[node]['W'] for node in paths])
 
 
-def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device):
+def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device, config: dict):
     """
     Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
 
@@ -104,14 +104,27 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
         string_to_embedding_mapping[embedding_circuit](features, dev.wires)
         # for each layer, lookup the function in the layer dict, call with parameters being passed.
         for d, component in enumerate(architecture):
-            string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
+            if component == 'hw_CNOT':
+                string_to_layer_mapping[component](list(range(nqubits)))
+            else:
+                string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
         # return an expectation value for each class so we can compare with one hot encoded labels.
-        return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
+        if nqubits > nclasses:
+            return [qml.expval(qml.PauliZ(nc)) for nc in range(nqubits)]
+        else:
+            return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
 
     # Return the shape of the parameters so we can initialize them correctly later on.
-    params_shape = (nqubits, len(architecture))
+    if config['circuit_type'] == 'schuld':
+        params_shape = (nqubits, len(architecture))
+        numcnots = architecture.count('ZZ') * 2 * nqubits  # count the number of cnots
+    elif config['circuit_type'] == 'hardware':
+        param_gates = [x for x in architecture if x != 'CNOT']
+        params_shape = (nqubits, len(param_gates))
+        params_shape = (nqubits, len(architecture))
+        numcnots = architecture.count('CNOT') * (nqubits - 1)  # Each CNOT layer has (n-1) CNOT gates
     # create and return a QNode
-    return qml.QNode(circuit_from_architecture, dev), params_shape
+    return qml.QNode(circuit_from_architecture, dev), params_shape, numcnots  # give back the number of cnots
 
 
 def run_tree_architecture_search(config: dict, dev_type: str):
@@ -139,6 +152,9 @@ def run_tree_architecture_search(config: dict, dev_type: str):
         - save_path: String. Location to store the data.
 
     """
+    # build in:  circuit type
+    # if circuit_type=='schuld' use controlled rotation gates and cycle layout for entangling layers
+    # if circuit_type=='hardware' use minimal gate set and path layout for entangling layers
     # Parse configuration parameters.
     NQUBITS = config['nqubits']
     NSAMPLES = config['n_samples']
@@ -151,7 +167,8 @@ def run_tree_architecture_search(config: dict, dev_type: str):
         my_prefix = PATH.split('/')[1]  # name of the folder in the bucket is the same as experiment name
         s3_folder = (my_bucket, my_prefix)
         device_arn = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
-        dev = qml.device("braket.aws.qubit", device_arn=device_arn, wires=NQUBITS, s3_destination_folder=s3_folder, parallel=True, max_parallel=20, poll_timeout_seconds=30)
+        dev = qml.device("braket.aws.qubit", device_arn=device_arn, wires=NQUBITS, s3_destination_folder=s3_folder,
+                         parallel=True, max_parallel=10, poll_timeout_seconds=30)
 
     MIN_TREE_DEPTH = config['min_tree_depth']
     MAX_TREE_DEPTH = config['max_tree_depth']
@@ -171,23 +188,40 @@ def run_tree_architecture_search(config: dict, dev_type: str):
     # rescale data to -1 1
     X_train = np.multiply(1.0, np.subtract(np.multiply(np.divide(np.subtract(X_train, X_train.min()),
                                                                  (X_train.max() - X_train.min())), 2.0), 1.0))
-    # one hot encode labels
-    y_train_ohe = np.zeros((y_train.size, y_train.max() + 1))
-    y_train_ohe[np.arange(y_train.size), y_train] = 1
+    if config['readout_layer'] == 'one_hot':
+        # one hot encode labels
+        # y_train_ohe = np.zeros((y_train.size, y_train.max() + 1))
+        y_train_ohe = np.zeros((y_train.size, NQUBITS))
+        y_train_ohe[np.arange(y_train.size), y_train] = 1
+    elif config['readout_layer'] == 'weighted_neuron':
+        y_train_ohe = y_train
     # automatically determine the number of classes
     NCLASSES = len(np.unique(y_train))
     assert NQUBITS >= NCLASSES, 'The number of qubits must be equal or larger than the number of classes'
-
+    save_timing = config.get('save_timing', False)
+    if save_timing:
+        print('saving timing info')
+        import time
     # Create a directed graph.
     G = nx.DiGraph()
     # Add the root
     G.add_node("ROOT")
-    nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
+    G.nodes['ROOT']["W"] = 0.0
+    G.nodes['ROOT']['weights'] = []
+    # nx.set_node_attributes(G, {'ROOT': 0.0}, 'W')
     # Define allowed layers
-    possible_layers = ['ZZ', 'X', 'Y']
+    ct_ = config.get('circuit_type', None)
+    if ct_ == 'schuld':
+        possible_layers = ['ZZ', 'X', 'Y', 'Z']
+        config['parameterized_gates'] = ['ZZ', 'X', 'Y', 'Z']
+    if ct_ == 'hardware':
+        possible_layers = ['hw_CNOT', 'X', 'Y', 'Z']
+        config['parameterized_gates'] = ['X', 'Y', 'Z']
     possible_embeddings = ['E1', ]
-    assert all([l in string_to_layer_mapping.keys() for l in possible_layers]), 'No valid mapping from string to function found'
-    assert all([l in string_to_embedding_mapping.keys() for l in possible_embeddings]), 'No valid mapping from string to function found'
+    assert all([l in string_to_layer_mapping.keys() for l in
+                possible_layers]), 'No valid mapping from string to function found'
+    assert all([l in string_to_embedding_mapping.keys() for l in
+                possible_embeddings]), 'No valid mapping from string to function found'
     leaves_at_depth_d = dict(zip(range(MAX_TREE_DEPTH), [[] for _ in range(MAX_TREE_DEPTH)]))
     leaves_at_depth_d[0].append('ROOT')
     # Iteratively construct tree, pruning at set rate
@@ -206,37 +240,100 @@ def run_tree_architecture_search(config: dict, dev_type: str):
                 tree_grow_root(G, leaves_at_depth_d, possible_embeddings)
                 # At the embedding level we don't need to train because there are no params.
                 for v in leaves_at_depth_d[d]:
-                    nx.set_node_attributes(G, {v: 1.0}, 'W')
+                    G.nodes[v]['W'] = 1.0
+                    G.nodes[v]['weights'] = []
+                # print('current graph: ',list(G.nodes(data=True)))
+                # nx.set_node_attributes(G, {v: 1.0}, 'W')
             else:
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
+                best_arch = max(nx.get_node_attributes(G, 'W').items(), key=operator.itemgetter(1))[0]
+                print('Current best architecture: ', best_arch)
+                print('max W:', G.nodes[best_arch]['W'])
+                print('weights:', G.nodes[best_arch]['weights'])
                 # For every leaf, create a circuit and run the optimization.
                 for v in leaves_at_depth_d[d]:
                     print(f'Training leaf {v}')
-                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
-                    w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    # print('current graph: ',list(G.nodes(data=True)))
+                    circuit, pshape, numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev, config)
+                    config['numcnots'] = numcnots
+                    # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    if save_timing:
+                        start = time.time()
+                        w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
+                        end = time.time()
+                        clock_time = end - start
+                        attrs = {"W": w_cost, "weights": weights.numpy(), "timing": clock_time}
+                    else:
+                        w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
+                        attrs = {"W": w_cost, "weights": weights.numpy(), 'num_cnots': None}
                     # Add the w_cost to the node so we can use it later for pruning
-                    nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    # nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    # nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    for kdx in attrs.keys():
+                        G.nodes[v][kdx] = attrs[kdx]
+                    # nx.set_node_attributes(G, attrs)
 
         else:
             # Check that we are at the correct prune depth step.
             if not (d - MIN_TREE_DEPTH) % PRUNE_DEPTH_STEP:
                 print('Prune Tree')
+                best_arch = max(nx.get_node_attributes(G, 'W').items(), key=operator.itemgetter(1))[0]
+                print('Current best architecture: ', best_arch)
+                print('max W:', G.nodes[best_arch]['W'])
+                print('weights:', G.nodes[best_arch]['weights'])
+                # print(nx.get_node_attributes(G,'W'))
                 tree_prune(G, leaves_at_depth_d, d, PRUNE_RATE)
                 print('Grow Pruned Tree')
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
                 # For every leaf, create a circuit and run the optimization.
                 for v in leaves_at_depth_d[d]:
-                    print(f'Training leaf {v}')
-                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
-                    w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    # print(f'Training leaf {v}')
+                    # print('current graph: ',list(G.nodes(data=True)))
+                    circuit, pshape, numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev, config)
+                    config['numcnots'] = numcnots
+                    # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    if save_timing:
+                        start = time.time()
+                        w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
+                        end = time.time()
+                        clock_time = end - start
+                        attrs = {"W": w_cost, "weights": weights.numpy(), "timing": clock_time}
+                    else:
+                        w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
+                        attrs = {"W": w_cost, "weights": weights.numpy(), 'num_cnots': None}
                     # Add the w_cost to the node so we can use it later for pruning
-                    nx.set_node_attributes(G, {v: w_cost}, 'W')
-
+                    # nx.set_node_attributes(G, attrs)
+                    for kdx in attrs.keys():
+                        G.nodes[v][kdx] = attrs[kdx]
             else:
                 print('Grow Tree')
+                best_arch = max(nx.get_node_attributes(G, 'W').items(), key=operator.itemgetter(1))[0]
+                print('Current best architecture: ', best_arch)
+                print('max W:', G.nodes[best_arch]['W'])
+                print('weights:', G.nodes[best_arch]['weights'])
                 tree_grow(G, leaves_at_depth_d, d, possible_layers)
                 for v in leaves_at_depth_d[d]:
-                    print(f'Training leaf {v}')
-                    circuit, pshape = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev)
-                    w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
-                    nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    # print(f'Training leaf {v}')
+                    # print('current graph: ',list(G.nodes(data=True)))
+                    circuit, pshape, numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev, config)
+                    config['numcnots'] = numcnots
+                    # w_cost = train_circuit(circuit, pshape, X_train, y_train_ohe, 'accuracy', **config)
+                    if save_timing:
+                        start = time.time()
+                        w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
+                        end = time.time()
+                        clock_time = end - start
+                        attrs = {"W": w_cost, "weights": weights.numpy(), "timing": clock_time}
+                    else:
+                        w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
+                        attrs = {"W": w_cost, "weights": weights.numpy()}
+                    # Add the w_cost to the node so we can use it later for pruning
+                    # nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    # nx.set_node_attributes(G, {v: w_cost}, 'W')
+                    # nx.set_node_attributes(G, attrs)
+                    for kdx in attrs.keys():
+                        G.nodes[v][kdx] = attrs[kdx]
+    best_arch = max(nx.get_node_attributes(G, 'W').items(), key=operator.itemgetter(1))[0]
+    print('architecture with max W: ', best_arch)
+    print('max W:', G.nodes[best_arch]['W'])
+    print('weights: ', G.nodes[best_arch]['weights'])

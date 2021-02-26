@@ -1,5 +1,5 @@
 import pickle
-from plot_utils import plot_tree
+from qose.plot_utils import plot_tree
 
 import networkx as nx
 import os
