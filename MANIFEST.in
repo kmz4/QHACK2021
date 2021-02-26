@@ -1,0 +1,5 @@
+ exclude mpi_evaluate_w.py
+ exclude qose/mpi_evaluate_w.py
+ exclude data/
+ exclude data/*
+ exclude qose/data/*
