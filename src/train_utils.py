@@ -1,6 +1,7 @@
 import pennylane as qml
 from pennylane import numpy as np
 import autograd.numpy as np
+from autograd.numpy import exp
 import itertools
 import time
 
@@ -16,12 +17,23 @@ def hinge_loss(labels, predictions, type='L2'):
     return loss
 
 
-def accuracy(labels, predictions):
+def ohe_accuracy(labels, predictions):
     loss = 0
     for l, p in zip(labels, predictions):
         loss += np.argmax(l) == np.argmax(p)
-    return loss / (labels.shape[0])
+    return loss / labels.shape[0]
 
+def wn_accuracy(labels, predictions):
+
+    loss = 0
+    #tol = 0.05
+    tol = 0.1
+    for l, p in zip(labels, predictions):
+        if abs(l - p) < tol:
+            loss = loss + 1
+    loss = loss / labels.shape[0]
+
+    return loss
 
 def mse(labels, predictions):
     # print(labels.shape, predictions.shape)
@@ -48,7 +60,7 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
     """
 
     # fix the seed while debugging
-    np.random.seed(1337)
+    #np.random.seed(1337)
     def ohe_cost_fcn(params, circuit, ang_array, actual):
         '''
         use MAE to start
@@ -60,11 +72,11 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
         '''
         use MAE to start
         '''
-        from autograd.numpy import exp
-        n = kwargs.get('nqubits')
         w = params[:,-1]
+
         theta = params[:,:-1]
-        predictions = [2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1. for x in ang_array]
+        #print(w.shape,w,theta.shape,theta)
+        predictions = np.asarray([2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1. for x in ang_array])
         return mse(actual, predictions)
 
     if kwargs['readout_layer']=='one_hot':
@@ -79,13 +91,13 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
 
     Tmax = kwargs['Tmax'] #Tmax[0] is maximum parameter size, Tmax[1] maximum inftime (timeit),Tmax[2] maximum number of entangling gates
     num_train = len(Y_train)
-    validation_size = 3 * batch_size
+    validation_size = int(0.1*num_train)
     opt = optim(stepsize=learning_rate) #all optimizers in autograd module take in argument stepsize, so this works for all
     start = time.time()
     for _ in range(kwargs['nsteps']):
         batch_index = np.random.randint(0, num_train, (batch_size,))
-        X_train_batch = X_train[batch_index]
-        Y_train_batch = Y_train[batch_index]
+        X_train_batch = np.asarray(X_train[batch_index])
+        Y_train_batch = np.asarray(Y_train[batch_index])
         if kwargs['readout_layer']=='one_hot':
             var, cost = opt.step_and_cost(lambda v: ohe_cost_fcn(v, circuit, X_train_batch, Y_train_batch), var)
         elif kwargs['readout_layer']=='weighted_neuron':
@@ -95,21 +107,30 @@ def train_circuit(circuit, parameter_shape,X_train, Y_train, batch_size, learnin
 
     if kwargs['rate_type'] == 'accuracy':
         validation_batch = np.random.randint(0, num_train, (validation_size,))
-        X_validation_batch = X_train[validation_batch]
-        Y_validation_batch = Y_train[validation_batch]
+        X_validation_batch = np.asarray(X_train[validation_batch])
+        Y_validation_batch = np.asarray(Y_train[validation_batch])
         start = time.time()  # add in timeit function from Wbranch
         if kwargs['readout_layer']=='one_hot':
             predictions = np.stack([circuit(var, x) for x in X_validation_batch])
         elif kwargs['readout_layer']=='weighted_neuron':
             n = kwargs.get('nqubits')
-            w = var[-n:]
-            theta = var[:-n]
-            prediction = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1.,0)) for x in X_validation_batch]
+            w = var[:,-1]
+            theta = var[:,:-1]
+            predictions = [int(np.round(2.*(1.0/(1.0+exp(np.dot(-w,circuit(theta, features=x)))))- 1.,1)) for x in X_validation_batch]
         end = time.time()
         inftime = (end - start) / len(X_validation_batch)
-        err_rate = (1.0 - accuracy(predictions, Y_validation_batch))+10**-7 #add small epsilon to prevent divide by 0 errors
+        if kwargs['readout_layer']=='one_hot':
+            err_rate = (1.0 - ohe_accuracy(Y_validation_batch,predictions))+10**-7 #add small epsilon to prevent divide by 0 errors
+            print('error rate:',err_rate)
+            #print('weights: ',var)
+        elif kwargs['readout_layer']=='weighted_neuron':
+            err_rate = (1.0 - wn_accuracy(Y_validation_batch,predictions))+10**-7 #add small epsilon to prevent divide by 0 errors
+            print('error rate:',err_rate)
+            #print('weights: ',var)
     elif kwargs['rate_type'] == 'batch_cost':
         err_rate = (cost) + 10**-7 #add small epsilon to prevent divide by 0 errors
+        print('error rate:',err_rate)
+        #print('weights: ',var)
         inftime = cost_time
     # QHACK #
 
