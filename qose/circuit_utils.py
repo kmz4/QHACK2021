@@ -1,16 +1,20 @@
 import pennylane as qml
 from pennylane import numpy as np
+from qose.featuremaps import *
+
 
 def cycle_CNOT_layer(wires):
     nq = len(wires)
-    for n in range(nq-1):
-        qml.CNOT(wires=[n,n+1])
-    qml.CNOT(wires=[nq-1,0])
+    for n in range(nq - 1):
+        qml.CNOT(wires=[n, n + 1])
+    qml.CNOT(wires=[nq - 1, 0])
+
 
 def path_CNOT_layer(wires):
     nq = len(wires)
-    for n in range(nq-1):
-        qml.CNOT(wires=[n,n+1])
+    for n in range(nq - 1):
+        qml.CNOT(wires=[n, n + 1])
+
 
 def zz_layer(wires, params):
     nq = len(wires)
@@ -30,34 +34,37 @@ def x_layer(wires, params):
     for n in range(nqubits):
         qml.RX(params[n], wires=[n, ])
 
+
 def z_layer(wires, params):
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RZ(params[n], wires=[n, ])
+
 
 def y_layer(wires, params):
     nqubits = len(wires)
     for n in range(nqubits):
         qml.RY(params[n], wires=[n, ])
 
-def embedding_1(X, wires,fill='redundant'):
-    if len(X)<len(wires):
-        r_ = len(wires)//len(X)
-        if fill=='redundant':
-            large_features = np.tile(X,r_)
-        elif fill=='pad':
-            large_features = np.pad(X,(0,len(wires)),'constant',constant_values=0)
-        qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation='Y') # replace with more general embedding
+
+def embedding_1(X, wires, fill='redundant'):
+    if len(X) < len(wires):
+        r_ = len(wires) // len(X)
+        if fill == 'redundant':
+            large_features = np.tile(X, r_)
+        elif fill == 'pad':
+            large_features = np.pad(X, (0, len(wires)), 'constant', constant_values=0)
+        qml.templates.embeddings.AngleEmbedding(large_features, wires=wires, rotation='Y')
     else:
-        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation='Y') # replace with more general embedding
-    qml.templates.embeddings.AngleEmbedding(X, wires=wires)
+        qml.templates.embeddings.AngleEmbedding(X, wires=wires, rotation='Y')
 
 
+def embedding_2(X, wires):
+    qml.templates.embeddings.AmplitudeEmbedding(X, wires=wires, pad=0, normalize=True)
 
 def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml.Device, config: dict):
     """
     Construct a Qnode specified by the architecture in the leaf. This includes an embedding layer as first layer.
-
     :param leaf: String that corresponds to a leaf in the tree.
     :param nqubits: The number of qubits in the circuit.
     :param nclasses:  The number of classes in the circuit.
@@ -96,8 +103,8 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
     # create and return a QNode
     return qml.QNode(circuit_from_architecture, dev), params_shape, numcnots  # give back the number of cnots
 
-string_to_layer_mapping = {'ZZ': zz_layer,\
-                        'X': x_layer, 'Y': y_layer,'Z':z_layer,\
-                        'hw_CNOT':path_CNOT_layer}
-string_to_embedding_mapping = {'E1': embedding_1}
-
+string_to_layer_mapping = {'ZZ': zz_layer, \
+                           'X': x_layer, 'Y': y_layer, 'Z': z_layer, \
+                           'hw_CNOT': path_CNOT_layer}
+string_to_embedding_mapping = {'E1': embedding_1, 'E2': embedding_2, 'E3': qaoa, 'E4': XXZ, 'E5': aspuru,
+                               'E6': random_embed}
