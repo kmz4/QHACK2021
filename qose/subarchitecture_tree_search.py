@@ -144,7 +144,7 @@ def run_tree_architecture_search(config: dict, dev_type: str):
     if config['readout_layer'] == 'one_hot':
         # one hot encode labels
         # y_train_ohe = np.zeros((y_train.size, y_train.max() + 1))
-        y_train_ohe = np.zeros((y_train.size, NQUBITS))
+        y_train_ohe = np.zeros((y_train.size, y_train.max() + 1))
         y_train_ohe[np.arange(y_train.size), y_train] = 1
     elif config['readout_layer'] == 'weighted_neuron':
         y_train_ohe = y_train

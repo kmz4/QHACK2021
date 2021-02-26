@@ -86,10 +86,7 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
             else:
                 string_to_layer_mapping[component](list(range(nqubits)), params[:, d])
         # return an expectation value for each class so we can compare with one hot encoded labels.
-        if nqubits > nclasses:
-            return [qml.expval(qml.PauliZ(nc)) for nc in range(nqubits)]
-        else:
-            return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
+        return [qml.expval(qml.PauliZ(nc)) for nc in range(nclasses)]
 
     # Return the shape of the parameters so we can initialize them correctly later on.
     if config['circuit_type'] == 'schuld':
