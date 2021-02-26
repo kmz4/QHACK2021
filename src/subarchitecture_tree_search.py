@@ -151,7 +151,7 @@ def run_tree_architecture_search(config: dict, dev_type: str):
         my_prefix = PATH.split('/')[1]  # name of the folder in the bucket is the same as experiment name
         s3_folder = (my_bucket, my_prefix)
         device_arn = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
-        dev = qml.device("braket.aws.qubit", device_arn=device_arn, wires=NQUBITS, s3_destination_folder=s3_folder, parallel=True, max_parallel=10, poll_timeout_seconds=30)
+        dev = qml.device("braket.aws.qubit", device_arn=device_arn, wires=NQUBITS, s3_destination_folder=s3_folder, parallel=True, max_parallel=20, poll_timeout_seconds=30)
 
     MIN_TREE_DEPTH = config['min_tree_depth']
     MAX_TREE_DEPTH = config['max_tree_depth']
