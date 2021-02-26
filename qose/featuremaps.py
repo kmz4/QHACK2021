@@ -2,10 +2,9 @@
 Feature maps
 ************
 This module contains feature maps. Each feature map function
-takes an input vector x and weights, and constructs a circuit that maps
-these two to a quantum state. The feature map function can be called in a qnode.
-A feature map has the following positional arguments: weights, x, wires. It can have optional
-keyword arguments.
+takes an input vector x and constructs a circuit that maps
+these two to a quantum state. numbe rof layers is set to one by default.
+The feature map function can be called in a qnode.
 Each feature map comes with a function that generates initial parameters
 for that particular feature map.
 The function get_embedding_info can be used to get information about the number of
