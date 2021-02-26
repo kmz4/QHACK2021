@@ -205,7 +205,7 @@ def run_tree_architecture_search(config: dict, dev_type: str):
                 print('weights:', G.nodes[best_arch]['weights'])
                 # For every leaf, create a circuit and run the optimization.
                 for v in leaves_at_depth_d[d]:
-                    print(f'Training leaf {v}')
+                    #print(f'Training leaf {v}')
                     # print('current graph: ',list(G.nodes(data=True)))
                     circuit, pshape, numcnots = construct_circuit_from_leaf(v, NQUBITS, NCLASSES, dev, config)
                     config['numcnots'] = numcnots
@@ -215,10 +215,10 @@ def run_tree_architecture_search(config: dict, dev_type: str):
                         w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
                         end = time.time()
                         clock_time = end - start
-                        attrs = {"W": w_cost, "weights": weights.numpy(), "timing": clock_time}
+                        attrs = {"W": w_cost, "weights": weights, "timing": clock_time}
                     else:
                         w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
-                        attrs = {"W": w_cost, "weights": weights.numpy(), 'num_cnots': None}
+                        attrs = {"W": w_cost, "weights": weights, 'num_cnots': None}
                     # Add the w_cost to the node so we can use it later for pruning
                     # nx.set_node_attributes(G, {v: w_cost}, 'W')
                     # nx.set_node_attributes(G, {v: w_cost}, 'W')
@@ -250,10 +250,10 @@ def run_tree_architecture_search(config: dict, dev_type: str):
                         w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
                         end = time.time()
                         clock_time = end - start
-                        attrs = {"W": w_cost, "weights": weights.numpy(), "timing": clock_time}
+                        attrs = {"W": w_cost, "weights": weights, "timing": clock_time}
                     else:
                         w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
-                        attrs = {"W": w_cost, "weights": weights.numpy(), 'num_cnots': None}
+                        attrs = {"W": w_cost, "weights": weights, 'num_cnots': None}
                     # Add the w_cost to the node so we can use it later for pruning
                     # nx.set_node_attributes(G, attrs)
                     for kdx in attrs.keys():
@@ -276,10 +276,10 @@ def run_tree_architecture_search(config: dict, dev_type: str):
                         w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
                         end = time.time()
                         clock_time = end - start
-                        attrs = {"W": w_cost, "weights": weights.numpy(), "timing": clock_time}
+                        attrs = {"W": w_cost, "weights": weights, "timing": clock_time}
                     else:
                         w_cost, weights = evaluate_w(circuit, pshape, X_train, y_train_ohe, **config)
-                        attrs = {"W": w_cost, "weights": weights.numpy()}
+                        attrs = {"W": w_cost, "weights": weights}
                     # Add the w_cost to the node so we can use it later for pruning
                     # nx.set_node_attributes(G, {v: w_cost}, 'W')
                     # nx.set_node_attributes(G, {v: w_cost}, 'W')
