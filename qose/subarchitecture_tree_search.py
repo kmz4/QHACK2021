@@ -113,8 +113,6 @@ def run_tree_architecture_search(config: dict, dev_type: str):
     - learning_rate: Float. Optimizer learning rate.
     - save_frequency: Integer. How often do we want to save the tree? Set to 0 for no saving.
     - save_path: String. Location to store the data.
-      config: dict: 
-      dev_type: str: 
 
     Returns:
 
