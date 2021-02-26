@@ -150,11 +150,6 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
       nqubits: The number of qubits in the circuit.
       nclasses: The number of classes in the circuit.
       dev: PennyLane Device.
-      leaf: str: 
-      nqubits: int: 
-      nclasses: int: 
-      dev: qml.Device: 
-      config: dict: 
 
     Returns:
       QNode corresponding to the circuit.

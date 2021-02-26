@@ -19,10 +19,6 @@ def tree_prune(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, prune_rate: float
       leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
       d: the depth that we are pruning at
       prune_rate: The percentage of leaves to be removed
-      G: nx.DiGraph: 
-      leaves_at_depth_d: dict: 
-      d: int: 
-      prune_rate: float: 
 
     Returns:
 
@@ -47,9 +43,6 @@ def tree_grow_root(G: nx.DiGraph, leaves_at_depth_d: dict, layers: List[str]):
       G: NetworkX DiGraph object that represents our tree.
       leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
       layers: List of strings containing embedding layers that can be added as first layer.
-      G: nx.DiGraph: 
-      leaves_at_depth_d: dict: 
-      layers: List[str]: 
 
     Returns:
 
@@ -68,10 +61,7 @@ def tree_grow(G: nx.DiGraph, leaves_at_depth_d: dict, d: int, layers: List[str])
       leaves_at_depth_d: Dictonary that keeps track of all the leaves at level d
       d: the depth that we are pruning at
       layers: List of strings of possible classification layers that can be added.
-      G: nx.DiGraph: 
-      leaves_at_depth_d: dict: 
-      d: int: 
-      layers: List[str]: 
+
 
     Returns:
 
@@ -95,8 +85,6 @@ def tree_cost_of_path(G: nx.DiGraph, leaf: str) -> float:
     Args:
       G: NetworkX DiGraph object that represents our tree.
       leaf: String that corresponds to a leaf in the tree.
-      G: nx.DiGraph: 
-      leaf: str: 
 
     Returns:
       float value corresponding to the cost.
