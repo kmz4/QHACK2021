@@ -114,9 +114,13 @@ def construct_circuit_from_leaf(leaf: str, nqubits: int, nclasses: int, dev: qml
     return qml.QNode(circuit_from_architecture, dev), params_shape
 
 
-def run_tree_architecture_search(config: dict):
+def run_tree_architecture_search(config: dict, dev_type: str):
     """
     The main workhorse for running the algorithm
+
+    dev_type: device type specified as either "remote" or "local"
+    "remote" is to use aws SV1
+    "local" is to use pennylane simulator
 
     :param config: Dictionary with configuration parameters for the algorithm. Possible keys are:
         - nqubits: Integer. The number of qubits in the circuit
@@ -138,7 +142,17 @@ def run_tree_architecture_search(config: dict):
     # Parse configuration parameters.
     NQUBITS = config['nqubits']
     NSAMPLES = config['n_samples']
-    dev = qml.device("default.qubit.autograd", wires=NQUBITS)
+    PATH = config['save_path']
+
+    if dev_type == "local":
+        dev = qml.device("default.qubit.autograd", wires=NQUBITS)
+    elif dev_type == "remote":
+        my_bucket = "amazon-braket-0fc49b964f85"  # the name of the bucket
+        my_prefix = PATH.split('/')[1]  # name of the folder in the bucket is the same as experiment name
+        s3_folder = (my_bucket, my_prefix)
+        device_arn = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
+        dev = qml.device("braket.aws.qubit", device_arn=device_arn, wires=NQUBITS, s3_destination_folder=s3_folder, parallel=True, max_parallel=10, poll_timeout_seconds=30)
+
     MIN_TREE_DEPTH = config['min_tree_depth']
     MAX_TREE_DEPTH = config['max_tree_depth']
     SAVE_FREQUENCY = config['save_frequency']
